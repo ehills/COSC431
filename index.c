@@ -13,13 +13,15 @@
 /* 
 * This method will begin indexing and set up all things that it needs.
 */
-void begin_indexing(void) { }
+void begin_indexing(void) { 
+    printf("Starting to index..\n");
+}
 
 /* 
 * This method will end indexing and free all things that it used.
 */
 void end_indexing(void) {
-    printf("C\n");
+    printf("Finished indexing..\n");
 }
 
 /* 
