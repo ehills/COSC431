@@ -5,6 +5,8 @@
 * Description: Header file for index.c. Defines all method signatures.
 */
 
+#include <stdlib.h>
+
 extern void begin_indexing(void);
 extern void end_indexing(void);
 extern void start_tag(char const *);
