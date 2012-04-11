@@ -19,7 +19,8 @@
 "</"[a-zA-Z][a-zA-Z0-9]*">"   { end_tag(yytext); }
 ([\$%]?[\.]?[0-9]+([\.,-][0-9]+)*[\$%]?)  { word(yytext); } /* eg. $24.08 */
 ([a-zA-Z][\.])+               { word(yytext); }
-.                               /* eat it up */
+[\&][a-z\;]+                         /* eat it up */ 
+.                            /* eat it up */
 %%
 
 #include "parse.h"
