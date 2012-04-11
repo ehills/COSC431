@@ -15,13 +15,13 @@
 
 %%
 [a-zA-Z]+([\']?[-]?[a-zA-Z])* { word(yytext); } /* eg fred\'s */
-^"<"[a-zA-Z][a-zA-Z0-9]*">"   { start_tag(yytext); }
+"<"[a-zA-Z][a-zA-Z0-9]*">"   { start_tag(yytext); }
 "</"[a-zA-Z][a-zA-Z0-9]*">"   { end_tag(yytext); }
 ([\$%]?[\.]?[0-9]+([\.,-][0-9]+)*[\$%]?)  { word(yytext); } /* eg. $24.08 */
 ([a-zA-Z][\.])+               { word(yytext); }
-[\&][a-z\;]+                         /* eat it up */ 
-["\n"]                         /* eat it up */ 
-.                            /* eat it up */
+[\&][a-z\;]+                  /* eat it up */ 
+["\n"]                        /* eat it up */ 
+.                             /* eat it up */
 %%
 
 #include "parse.h"
@@ -36,7 +36,6 @@ void parse(FILE *stream) {
 /** DECISIONS
 *   Chose not to include "quoted sentences as one word"
 *   Chose not to include words thats end with a single quote
-*   Chose to include words that have ampersand as one word
-*   and separately
-*   Chose to index the dates as numbers separetly and with slashes
+*   Chose to remove the &amp; entities and treat surrouding words separately
+*   Chose to index the dates as numbers without slashes
 */
