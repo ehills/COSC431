@@ -17,7 +17,6 @@ char const *index_file_name = "wsj-index";
 * This method will begin indexing and set up all things that it needs.
 */
 void begin_indexing(void) {
-    printf("Starting to index..\n");
     fp = fopen(index_file_name, "w");
     if (fp == 0) {
         perror(index_file_name);
@@ -29,8 +28,6 @@ void begin_indexing(void) {
 * This method will end indexing and free all things that it used.
 */
 void end_indexing(void) {
-    printf("Finished indexing..\n");
-
     if (fclose(fp) < 0) {
         perror("Closing file.");
         exit(EXIT_FAILURE);

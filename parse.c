@@ -2,34 +2,39 @@
 * File: parse.c
 * Author: Edward Hills
 * Date: 23/03/2012
-* Description: This program will parse the xml collection of the wall street
-*              journal collection and parse it to the indexer to be indexed.*/
+* Description: This program will parse the xml collection given to it 
+*              using the scanner created by flex below, and then pass
+*              the terms onto the indexer.
+*/
+
+%option noyywrap
+%{
+#include <stdio.h>
+#include "index.h"
+%}
+
+%%
+[a-zA-Z]+([\']?[-]?[a-zA-Z])* { word(yytext); } /* eg fred\'s */
+^"<"[a-zA-Z][a-zA-Z0-9]*">"   { start_tag(yytext); }
+"</"[a-zA-Z][a-zA-Z0-9]*">"   { end_tag(yytext); }
+([\$%]?[\.]?[0-9]+([\.,-][0-9]+)*[\$%]?)  { word(yytext); } /* eg. $24.08 */
+([a-zA-Z][\.])+               { word(yytext); }
+.                               /* eat it up */
+%%
 
 #include "parse.h"
 
-char line[2];
-
-/*
-* This method will parse the input file and send its data to the indexer.
-*/
 void parse(FILE *stream) {
-    while (fgets(line, 2, stream) != NULL) {
+    
+    yyin = stream;
+    yylex();
 
-        // case 1:
-        // if its a <l its opening tag
-        
-        // case 2: 
-        // if its a ll its a word unless after opening/closing tag
-        // in which case its the name of the tag
-
-        // case 3:
-        // if its a </ its a closing tag
-
-        // case 4:
-        // if its a > its end of either opening or closing tag
-
-        printf("%s\n",line);
-    }
 }
 
-// end parse.c
+/** DECISIONS
+*   Chose not to include "quoted sentences as one word"
+*   Chose not to include words thats end with a single quote
+*   Chose to include words that have ampersand as one word
+*   and separately
+*   Chose to index the dates as numbers separetly and with slashes
+*/
