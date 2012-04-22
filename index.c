@@ -9,9 +9,18 @@
 #include <stdio.h>
 #include "parse.h"
 #include "index.h"
+#define NUM_WORDS 1000000 // ~850,000 unique words
 
 FILE *fp;
 char const *index_file_name = "wsj-index";
+int docno_incoming = 0;
+
+struct inverted_file_rec {
+
+    char *dict[NUM_WORDS];
+    int *postings[NUM_WORDS];
+
+};
 
 /* 
 * This method will begin indexing and set up all things that it needs.
@@ -22,6 +31,7 @@ void begin_indexing(void) {
         perror(index_file_name);
         exit(EXIT_FAILURE);
     }
+
 }
 
 /* 
@@ -39,6 +49,10 @@ void end_indexing(void) {
 */
 void start_tag(char const *name) {
     printf("(%s\n", name);
+
+//    if (strcmp == "<DOCNO>") {
+  //      docno_incoming = 1;
+   // }
 }
 
 /* 

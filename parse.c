@@ -15,9 +15,9 @@
 
 %%
 [a-zA-Z]+([\']?[-]?[a-zA-Z])* { word(yytext); } /* eg fred\'s */
-"<"[a-zA-Z][a-zA-Z0-9]*">"   { start_tag(yytext); }
-"</"[a-zA-Z][a-zA-Z0-9]*">"   { end_tag(yytext); }
-[a-zA-Z]*[\$]?[\.]?[0-9]+([/\.,-][0-9]+)*[\%]?  { word(yytext); } /* eg. $24.08 */
+"<"[a-zA-Z]+">"   { start_tag(yytext); }
+"</"[a-zA-Z]+">"   { end_tag(yytext); }
+[a-zA-Z]*[\$]?[\.]?[-\+]?[0-9]+([/]?[\.,-][0-9]+)*[\%]?  { word(yytext); } /* eg. $24.08 */
 ([a-zA-Z][\.])+               { word(yytext); }
 [\&][a-z\;]+                  /* eat it up */ 
 ["\n"]                        /* eat it up */ 
