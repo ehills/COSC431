@@ -14,7 +14,20 @@
 %}
 
 %%
-[a-zA-Z]+([\']?[-]?[a-zA-Z])* { word(yytext); } /* eg fred\'s */
+[a-zA-Z]+([\']?[-]?[a-zA-Z])* { 
+    /* Make all lower case */
+
+    int i;
+    for (i =0; yytext[i] != '\0'; i++) {
+        if (yytext[i] >= 'A' && yytext[i] <= 'Z') {
+            yytext[i] = yytext[i] - ('A' -'a');
+        }
+    }
+    
+    word(yytext); 
+    
+} /* eg fred\'s */
+
 "<"[a-zA-Z]+">"   { start_tag(yytext); }
 "</"[a-zA-Z]+">"   { end_tag(yytext); }
 [a-zA-Z]*[\$]?[\.]?[-\+]?[0-9]+([/]?[\.,-][0-9]+)*[\%]?  { word(yytext); } /* eg. $24.08 */

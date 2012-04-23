@@ -12,6 +12,7 @@ extern void end_indexing(void);
 extern void start_tag(char const *);
 extern void end_tag(char const *);
 extern void word(char const *);
-typedef struct inverted_file_rec inverted_file;
+extern char *get_doc_no(const char *);
+typedef struct word_container_rec word_container;
 
 // end index.h

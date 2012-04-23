@@ -775,50 +775,62 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 17 "parse.c"
-{ word(yytext); } /* eg fred\'s */
+{ 
+    /* Make all lower case */
+
+    int i;
+    for (i =0; yytext[i] != '\0'; i++) {
+        if (yytext[i] >= 'A' && yytext[i] <= 'Z') {
+            yytext[i] = yytext[i] - ('A' -'a');
+        }
+    }
+    
+    word(yytext); 
+    
+} /* eg fred\'s */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 18 "parse.c"
+#line 31 "parse.c"
 { start_tag(yytext); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 19 "parse.c"
+#line 32 "parse.c"
 { end_tag(yytext); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 20 "parse.c"
+#line 33 "parse.c"
 { word(yytext); } /* eg. $24.08 */
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 21 "parse.c"
+#line 34 "parse.c"
 { word(yytext); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 22 "parse.c"
+#line 35 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 23 "parse.c"
+#line 36 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 24 "parse.c"
+#line 37 "parse.c"
 /* eat it up */
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 25 "parse.c"
+#line 38 "parse.c"
 ECHO;
 	YY_BREAK
-#line 822 "lex.yy.c"
+#line 834 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1816,7 +1828,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 25 "parse.c"
+#line 38 "parse.c"
 
 
 

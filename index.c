@@ -9,18 +9,16 @@
 #include <stdio.h>
 #include "parse.h"
 #include "index.h"
+#include "mylib.h"
+#include "htable.h"
 #define NUM_WORDS 1000000 // ~850,000 unique words
 
 FILE *fp;
 char const *index_file_name = "wsj-index";
 int docno_incoming = 0;
-
-struct inverted_file_rec {
-
-    char *dict[NUM_WORDS];
-    int *postings[NUM_WORDS];
-
-};
+htable dict;
+unsigned int count = 0;
+long curr_docno;
 
 /* 
 * This method will begin indexing and set up all things that it needs.
@@ -32,12 +30,17 @@ void begin_indexing(void) {
         exit(EXIT_FAILURE);
     }
 
+    dict = htable_new(NUM_WORDS, DOUBLE_H);
+
 }
 
 /* 
 * This method will end indexing and free all things that it used.
 */
 void end_indexing(void) {
+    htable_print(dict);
+    htable_delete(dict);
+
     if (fclose(fp) < 0) {
         perror("Closing file.");
         exit(EXIT_FAILURE);
@@ -48,25 +51,46 @@ void end_indexing(void) {
 * This method will take in the start_tag and index it.
 */
 void start_tag(char const *name) {
-    printf("(%s\n", name);
 
-//    if (strcmp == "<DOCNO>") {
-  //      docno_incoming = 1;
-   // }
+    if (!strcmp(name, "<DOCNO>")) {
+        docno_incoming = 1;
+    }
 }
 
 /* 
 * This method will take in the end_tag and index it.
 */
 void end_tag(char const *name) {
-    printf(")%s\n", name);
+    if (!strcmp(name, "</DOCNO>")) {
+        docno_incoming = 0;
+    }
 }
 
 /* 
 * This method will take in the word and index it.
 */
 void word(char const *spelling) {
-    printf("- %s\n", spelling);
+
+    if (docno_incoming) {
+        curr_docno = atol(get_doc_no(spelling));
+    }
+
+    htable_insert(dict, spelling, curr_docno);
+}
+
+char *get_doc_no(const char *docid) {
+    
+    char* doc = malloc(sizeof(docid));
+    int i;
+    int place = 0;
+    
+    for (i = 3; docid[i] != '\0'; i++) {
+        if (docid[i] != '-') {
+            doc[place++] = docid[i];
+        }
+    }
+
+    return doc;
 }
 
 // end index.c
