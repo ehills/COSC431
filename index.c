@@ -80,7 +80,7 @@ void word(char const *spelling) {
 
 char *get_doc_no(const char *docid) {
     
-    char* doc = malloc(sizeof(docid));
+    char* doc = emalloc(sizeof(docid));
     int i;
     int place = 0;
     

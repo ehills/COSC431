@@ -13,7 +13,7 @@ flexarray flexarray_new(){
    flexarray result = emalloc(sizeof(*result));
    result->capacity = 2;
    result->no_of_documents = 0;
-   result->docid = emalloc((result->capacity) * sizeof(result->docid[0]));
+   result->docid = emalloc((result->capacity) * sizeof(long));
    return result;
 }
 

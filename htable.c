@@ -52,6 +52,7 @@ htable htable_new(int capacity, hashing_t hashing_type){
     for (i = 0; i < capacity; i++){
         result->keys[i] = NULL;
         result->postings[i] = NULL;
+        result->count[i] = 0;
     }
     return result;
 }
@@ -96,8 +97,11 @@ void htable_delete(htable h){
 
     for (i = 0; i < h->capacity; i++){
         free(h->keys[i]);
+        flexarray_delete(h->postings[i]);
     }
-    free(h-> keys);
+    free(h->count);
+    free(h->postings);
+    free(h->keys);
     free(h);
 }
 
