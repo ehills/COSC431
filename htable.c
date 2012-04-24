@@ -22,12 +22,12 @@
  * stats and the hashing type.
  */
 struct htablerec{
+    hashing_t hashing_type;
     int num_keys;
     int capacity;
     int *count;
-    char **keys;
-    hashing_t hashing_type;
     flexarray *postings;
+    char **keys;
 };
 
 /**
@@ -40,13 +40,13 @@ struct htablerec{
  */
 htable htable_new(int capacity, hashing_t hashing_type){
     int i;
-    htable result = emalloc(sizeof *result);
+    htable result = emalloc(sizeof(*result));
 
     capacity = find_prime(capacity);
     result->capacity = capacity;
     result->num_keys = 0;
-    result->keys = emalloc(capacity * sizeof result->keys[0]);
-    result->postings = emalloc(capacity * sizeof result->postings);
+    result->keys = emalloc(capacity * sizeof(result->keys[0]));
+    result->postings = emalloc(capacity * sizeof(result->postings));
     result->count = emalloc(capacity * sizeof(int));
     result->hashing_type = hashing_type;
     for (i = 0; i < capacity; i++){
@@ -151,8 +151,7 @@ int htable_insert(htable h, const char *s, long docid){
 
     for (collisions = 0; collisions <= h->capacity; collisions++){
         if (h->keys[position] == NULL) {
-            h->keys[position] = emalloc((strlen(s) + 1) * sizeof s[0]);
-            h->keys[position] = emalloc(sizeof(int));
+            h->keys[position] = emalloc((strlen(s) + 1) * sizeof(s[0]));
             strcpy(h->keys[position], s);
             h->postings[position] = flexarray_new();
             flexarray_append(h->postings[position], docid);
@@ -211,9 +210,9 @@ void htable_print(htable h){
 
     for (i = 0; i < h->capacity; i++){
         if (h->keys[i] != NULL) {
-            printf("Word: %s\n", h->keys[i]);
-            printf("Found %d time(s).\nIn:\n", h->count[i]);
+            printf("%s\t", h->keys[i]);
             flexarray_print(h->postings[i]);
+            printf("\n");
         }
     }
     printf("Number of words entered: %d", h->num_keys);

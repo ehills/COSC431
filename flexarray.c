@@ -10,10 +10,10 @@ struct flexarrayrec {
 };
 
 flexarray flexarray_new(){
-   flexarray result = emalloc(sizeof(*result));
+   flexarray result = emalloc(sizeof(result));
    result->capacity = 2;
    result->no_of_documents = 0;
-   result->docid = emalloc((result->capacity) * sizeof(long));
+   result->docid = emalloc((result->capacity) * sizeof(result->docid[0]));
    return result;
 }
 
@@ -35,7 +35,7 @@ void flexarray_print(flexarray f) {
    int i;
 
    for (i = 0; i < f->no_of_documents; i++) {
-      printf("%ld\n", f->docid[i]);
+      printf("%ld\t", f->docid[i]);
    }
 }
 
