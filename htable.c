@@ -205,7 +205,8 @@ int htable_save_to_disk(htable h, FILE* fp) {
     FILE *postings_fp = NULL;
     unsigned int pos = 0;
     unsigned int length = 0;
-    // sort?
+
+    /* sort? */
  
     postings_fp = fopen("wsj-postings", "w");
     if (postings_fp == NULL) {
@@ -216,15 +217,12 @@ int htable_save_to_disk(htable h, FILE* fp) {
     
     for (i = 0; i <= h->capacity; i++) {
         if (h->keys[i] != NULL) {
-            length = flexarray_get_posting_length(h->postings[i]);
-            fprintf(fp, "%s %d %d", h->keys[i], pos, length);
+            length = flexarray_save_to_disk(h->postings[i], postings_fp);
+            fprintf(fp, "%s %d %d\n", h->keys[i], pos, length);
             pos += length;
         }
     }
 
-   // save the term and the line number of the postings.
-   // save the postings
-    
     if (fclose(postings_fp) != 0) {
         fprintf(stderr, "'wsj-postings' failed to close\n")    ;           
         return EXIT_FAILURE;

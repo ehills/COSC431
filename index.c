@@ -11,7 +11,8 @@
 #include "index.h"
 #include "mylib.h"
 #include "htable.h"
-#define NUM_WORDS 1000000 // ~850,000 unique words
+#include <string.h>
+#define NUM_WORDS 900000 // ~750,000 unique words
 
 FILE *fp;
 char const *index_file_name = "wsj-index";
@@ -38,10 +39,9 @@ void begin_indexing(void) {
 * This method will end indexing and free all things that it used.
 */
 void end_indexing(void) {
-   // htable_print(dict);
- //  htable_delete(dict);
 
     htable_save_to_disk(dict, fp);
+    htable_delete(dict);
 
     if (fclose(fp) < 0) {
         perror("Closing file.");

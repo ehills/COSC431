@@ -19,5 +19,6 @@ extern void htable_delete(htable h);
 extern int htable_insert(htable h, const char *s, long docid);
 extern int htable_search(htable h, const char *s);
 extern void htable_print(htable h);
+extern int htable_save_to_disk(htable h, FILE*);
 
 #endif

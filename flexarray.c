@@ -19,15 +19,13 @@ flexarray flexarray_new(){
     return result;
 }
 
-unsigned int flexarray_get_posting_length(flexarray f, FILE* fp) {
+unsigned int flexarray_save_to_disk(flexarray f, FILE* fp) {
     int i;
     unsigned int length = 0;
-    int chars= 0;
-    char line[20];
-    for (i = 0; i < f->no_of_documents; i++) {
-        chars += sprintf(line, "%d %ld\t", f->times_found[i], f->docid[i]);
+    for (i = 0; i < f->no_of_documents -1; i++) {
+        length += fprintf(fp, "%d %ld\t", f->times_found[i], f->docid[i]);
     }
-    length = chars * sizeof(char);
+    length += fprintf(fp, "%d %ld", f->times_found[f->no_of_documents - 1], f->docid[f->no_of_documents - 1]);
     return length;
 }
 
