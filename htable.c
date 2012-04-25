@@ -164,6 +164,8 @@ int htable_insert(htable h, const char *s, long docid){
 
             if (flexarray_get_last_id(h->postings[position]) != docid) {
                 flexarray_append(h->postings[position], docid);
+            } else {
+                flexarray_updatecount(h->postings[position]);
             }
             return 1;
         } else {
@@ -197,6 +199,40 @@ int htable_search(htable h, const char *s){
     return 0;
 }
 
+
+int htable_save_to_disk(htable h, FILE* fp) {
+    int i;
+    FILE *postings_fp = NULL;
+    unsigned int pos = 0;
+    unsigned int length = 0;
+    // sort?
+ 
+    postings_fp = fopen("wsj-postings", "w");
+    if (postings_fp == NULL) {
+        fprintf(stderr, "'wsj-postings' failed to open\n")    ;           
+        return EXIT_FAILURE;
+    }
+
+    
+    for (i = 0; i <= h->capacity; i++) {
+        if (h->keys[i] != NULL) {
+            length = flexarray_get_posting_length(h->postings[i]);
+            fprintf(fp, "%s %d %d", h->keys[i], pos, length);
+            pos += length;
+        }
+    }
+
+   // save the term and the line number of the postings.
+   // save the postings
+    
+    if (fclose(postings_fp) != 0) {
+        fprintf(stderr, "'wsj-postings' failed to close\n")    ;           
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+
+}
 
 /**
  * Prints out all the words stored in the hashtable and the frequency of

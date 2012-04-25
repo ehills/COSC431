@@ -12,7 +12,7 @@ extern void end_indexing(void);
 extern void start_tag(char const *);
 extern void end_tag(char const *);
 extern void word(char const *);
-extern char *get_doc_no(const char *);
+extern char *get_doc_no(char const *);
 typedef struct word_container_rec word_container;
 
 // end index.h

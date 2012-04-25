@@ -38,8 +38,10 @@ void begin_indexing(void) {
 * This method will end indexing and free all things that it used.
 */
 void end_indexing(void) {
-    htable_print(dict);
+   // htable_print(dict);
  //  htable_delete(dict);
+
+    htable_save_to_disk(dict, fp);
 
     if (fclose(fp) < 0) {
         perror("Closing file.");
