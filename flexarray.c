@@ -22,10 +22,9 @@ flexarray flexarray_new(){
 unsigned int flexarray_save_to_disk(flexarray f, FILE* fp) {
     int i;
     unsigned int length = 0;
-    for (i = 0; i < f->no_of_documents -1; i++) {
+    for (i = 0; i < f->no_of_documents; i++) {
         length += fprintf(fp, "%d %ld\t", f->times_found[i], f->docid[i]);
     }
-    length += fprintf(fp, "%d %ld", f->times_found[f->no_of_documents - 1], f->docid[f->no_of_documents - 1]);
     return length;
 }
 

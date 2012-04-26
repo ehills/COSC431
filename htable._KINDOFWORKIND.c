@@ -16,7 +16,6 @@
 #include "flexarray.h"
 #include <string.h>
 
-
 /**
  * Sets the attributes that the htable will have, it will store the capacity,
  * number of items entered, the values as well as how frequent they appear,
@@ -27,12 +26,8 @@ struct htablerec{
     int num_keys;
     int capacity;
     int *count;
-    key_value *keys;
-};
-
-struct key_value_rec {
-    char *key;
-    flexarray postings;
+    flexarray *postings;
+    char **keys;
 };
 
 /**
@@ -51,9 +46,12 @@ htable htable_new(int capacity, hashing_t hashing_type){
     result->capacity = capacity;
     result->num_keys = 0;
     result->keys = emalloc(capacity * sizeof(result->keys[0]));
+    result->postings = emalloc(capacity * sizeof(result->postings));
     result->count = emalloc(capacity * sizeof(int));
     result->hashing_type = hashing_type;
     for (i = 0; i < capacity; i++){
+        result->keys[i] = NULL;
+        result->postings[i] = NULL;
         result->count[i] = 0;
     }
     return result;
@@ -97,10 +95,12 @@ int is_prime(int candidate) {
 void htable_delete(htable h){
     int i;
 
-    //for (i = 0; i < h->capacity; i++){
-     //   free(h->keys[i]);
-  //  }
+    for (i = 0; i < h->capacity; i++){
+        free(h->keys[i]);
+        flexarray_delete(h->postings[i]);
+    }
     free(h->count);
+    free(h->postings);
     free(h->keys);
     free(h);
 }
@@ -150,22 +150,22 @@ int htable_insert(htable h, const char *s, long docid){
     int step = htable_step(h, htable_word_to_int(s));
 
     for (collisions = 0; collisions <= h->capacity; collisions++){
-        if ((h->keys[position]).key == NULL) {
-            (h->keys[position]).key = emalloc((strlen(s) + 1) * sizeof(s[0]));
-            strcpy((h->keys[position]).key, s);
-            (h->keys[position]).postings = flexarray_new();
-            flexarray_append((h->keys[position]).postings, docid);
+        if (h->keys[position] == NULL) {
+            h->keys[position] = emalloc((strlen(s) + 1) * sizeof(s[0]));
+            strcpy(h->keys[position], s);
+            h->postings[position] = flexarray_new();
+            flexarray_append(h->postings[position], docid);
             h->num_keys++;
             h->count[position]++;
             return 1;
-        } else if (!strcmp((h->keys[position]).key, s)){
+        } else if (!strcmp(h->keys[position], s)){
 
             h->count[position]++;
 
-            if (flexarray_get_last_id((h->keys[position]).postings) != docid) {
-                flexarray_append((h->keys[position]).postings, docid);
+            if (flexarray_get_last_id(h->postings[position]) != docid) {
+                flexarray_append(h->postings[position], docid);
             } else {
-                flexarray_updatecount((h->keys[position]).postings);
+                flexarray_updatecount(h->postings[position]);
             }
             return 1;
         } else {
@@ -188,9 +188,9 @@ int htable_search(htable h, const char *s){
     int step = htable_step(h, htable_word_to_int(s));
 
     for (i = 0; i <= h->capacity; i++){
-        if (h->keys[position].key == NULL){
+        if (h->keys[position] == NULL){
             return 0;
-        } else if(strcmp(h->keys[position].key, s) == 0){
+        } else if(strcmp(h->keys[position], s) == 0){
             return 1;
         } else {
             position = (position + step) % h->capacity;
@@ -199,28 +199,32 @@ int htable_search(htable h, const char *s){
     return 0;
 }
 
+
 int htable_save_to_disk(htable h, FILE* fp) {
     int i;
     FILE *postings_fp = NULL;
     unsigned int pos = 0;
     unsigned int length = 0;
 
-    qsort(h->keys, h->capacity, sizeof(key_value), compare);
+    /* sort? */
  
     postings_fp = fopen("wsj-postings", "w");
     if (postings_fp == NULL) {
-        fprintf(stderr, "'wsj-postings' failed to open\n");
+        fprintf(stderr, "'wsj-postings' failed to open\n")    ;           
         return EXIT_FAILURE;
     }
 
+    
     for (i = 0; i <= h->capacity; i++) {
-        length = flexarray_save_to_disk((h->keys[i]).postings, postings_fp);
-        fprintf(fp, "%s %d %d\n", (h->keys[i]).key, pos, length);
-        pos += length;
+        if (h->keys[i] != NULL) {
+            length = flexarray_save_to_disk(h->postings[i], postings_fp);
+            fprintf(fp, "%s %d %d\n", h->keys[i], pos, length);
+            pos += length;
+        }
     }
 
     if (fclose(postings_fp) != 0) {
-        fprintf(stderr, "'wsj-postings' failed to close\n"); 
+        fprintf(stderr, "'wsj-postings' failed to close\n")    ;           
         return EXIT_FAILURE;
     }
 
@@ -239,32 +243,11 @@ void htable_print(htable h){
     int i;
 
     for (i = 0; i < h->capacity; i++){
-        if ((h->keys[i]).key != NULL) {
-            printf("%s\t", (h->keys[i]).key);
-            flexarray_print((h->keys[i]).postings);
+        if (h->keys[i] != NULL) {
+            printf("%s\t", h->keys[i]);
+            flexarray_print(h->postings[i]);
             printf("\n");
         }
     }
     printf("Number of words entered: %d", h->num_keys);
 }
-
-int compare(const void *x, const void *y) {
-
-    key_value *ix = (key_value *) x;
-    key_value *iy = (key_value *) y;
-    char *key1 = ix->key;
-    char *key2 = iy->key;
-    
-    if (key1 == NULL && key2 == NULL) {
-        return 0;
-    }
-    if (key1 == NULL) {
-        return -1;
-    }
-    if (key2 == NULL) {
-        return 1;
-    }
-    
-    return strcmp (key1, key2);
-}
-

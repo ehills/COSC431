@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mylib.h"
+#include "htable.h"
 
 void *emalloc(size_t s){
    void *result = malloc(s);

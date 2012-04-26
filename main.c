@@ -98,20 +98,29 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        fseek(postings_file, posting_pos[0], SEEK_SET);
-        temp_word = emalloc(posting_length[0]);
-        fgets(temp_word, posting_length[0], postings_file);
-       
+        // find term from soon to be sorted array then look it up with (see below)
+
+        fseek(postings_file, posting_pos[4], SEEK_SET);
+        temp_word = emalloc(posting_length[4]);
+        fgets(temp_word, posting_length[4], postings_file);
+
+        
+        // load posting stuff into memory
         i = 0;
         while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
 
             posting_count[i] = atoi(temp1);
             posting_docid[i] = atol(temp2);
             bytes_read += (strlen(temp1) + strlen(temp2) + 2);
+            fprintf(stderr, "%d %ld\n", posting_count[i], posting_docid[i]);
             i++;
         }
 
-        /* free everything */
+        // get most relevant
+
+        //i = get_max_count_pos(posting_count);            
+
+        /* free everything 
         free(temp1);
         free(temp2);
         free(file);
@@ -122,7 +131,7 @@ int main(int argc, char **argv) {
         free(posting_docid);
         free(posting_pos);
         free(posting_length);
-        free(dictionary);
+        free(dictionary); */
 
         /* close postings file */
         if (fclose(postings_file) != 0) {

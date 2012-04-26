@@ -41,7 +41,7 @@ void begin_indexing(void) {
 void end_indexing(void) {
 
     htable_save_to_disk(dict, fp);
-    htable_delete(dict);
+//    htable_delete(dict);
 
     if (fclose(fp) < 0) {
         perror("Closing file.");
