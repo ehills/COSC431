@@ -18,6 +18,8 @@
 #define MAX_DOCUMENTS 200000
 
 int compare_count(const void *x, const void *y);
+char *decompress(char *,long);
+
 typedef struct posting_rec {
 
     int posting_count;
@@ -146,11 +148,12 @@ int main(int argc, char **argv) {
 
         }
 
+        char docid_buffer[15]; 
         for (j =2; j < argc; j++) {
             fprintf(stdout, "\nTop 10 Postings for %s\n", argv[j]);
             for (i=0; i < 10; i++) {
                 if (postings[j-2][i].posting_count) {
-                fprintf(stdout, "Docid: %ld count: %d\n", postings[j-2][i].posting_docid, postings[j-2][i].posting_count);
+                fprintf(stdout, "Docid: %s count: %d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
                 }
             }
         }
@@ -173,6 +176,7 @@ int main(int argc, char **argv) {
 
 }
 
+
 int compare_count(const void *x, const void *y) {
     
     posting *ix = (posting *) x;
@@ -189,3 +193,18 @@ int compare_count(const void *x, const void *y) {
     }
 }
 
+char *decompress(char *decompressed_docid, long docid) {
+    int length;
+
+    sprintf(decompressed_docid, "WSJ%ld", docid);
+    length = strlen(decompressed_docid);
+
+    decompressed_docid[length] = decompressed_docid[length -1];
+    decompressed_docid[length-1] = decompressed_docid[length -2];
+    decompressed_docid[length-2] = decompressed_docid[length -3];
+    decompressed_docid[length-3] = decompressed_docid[length -4];
+    decompressed_docid[length-4] = '-';
+    decompressed_docid[length + 1] = '\0';
+
+    return decompressed_docid;
+}
