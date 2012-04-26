@@ -265,6 +265,6 @@ int compare(const void *x, const void *y) {
         return -1;
     }
     
-    return strcmp (key1, key2);
+    return strcmp(key1, key2);
 }
 

@@ -44,11 +44,12 @@ int main(int argc, char **argv) {
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
     int bad_term[argc -2];
+    int post_count;
+    int merged_count = 0;
+    int result = 0;
 
+    posting **merged_postings = emalloc(2 * sizeof(merged_postings[0]));
     posting **postings = emalloc((argc -2) * sizeof(postings[0]));
-
-//    int **posting_count = emalloc((argc -2) * sizeof(posting_count[0]));
-//    long **posting_docid = emalloc((argc -2) * sizeof(posting_docid[0]));
 
     if (argc < 2) {
         fprintf(stderr, "Please provide a command\n");
@@ -130,14 +131,14 @@ int main(int argc, char **argv) {
                 fgets(temp_word, posting_length[i], postings_file);
 
                 // load posting stuff into memory
-                i = 0;
+                post_count = 0;
                 bytes_read = 0;
                 while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
 
-                    postings[j-2][i].posting_count = atoi(temp1);
-                    postings[j-2][i].posting_docid = atol(temp2);
+                    postings[j-2][post_count].posting_count = atoi(temp1);
+                    postings[j-2][post_count].posting_docid = atol(temp2);
                     bytes_read += (strlen(temp1) + strlen(temp2) + 2);
-                    i++;
+                    post_count++;
                 }
                 bad_term[j-2] = -1;
             } else {
@@ -147,8 +148,29 @@ int main(int argc, char **argv) {
             }
 
             // merge here -> maybe, should probs be out this loop
-            qsort(postings[j-2], i, sizeof(posting), compare_count);
-            // return hits ^^ see above
+            
+            if (j >= 3) {
+                for (i = 0; i < post_count; i++) {
+                    
+                    // TODO fix.. because original merged_count is 0... need to store prev_count and have new counter then update prev count = new counter.
+                    // super easy. need bed though.
+                    if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count))) {
+                        merged_postings[1] = emalloc(sizeof(posting));
+                        merged_postings[1][i].posting_docid = postings[j-2][i].posting_docid;
+                        merged_postings[1][i].posting_count = postings[j-2][i].posting_count + result;
+                    }
+                }
+                merged_postings[0] = merged_postings[1];
+                merged_count++; // broken
+
+            } else if (argc > 3) {
+                merged_postings[0] = postings[j-2];
+            }
+
+           // qsort(, i, sizeof(posting), compare_count);
+           
+           
+           // return hits ^^ see above
 
         }
         
@@ -160,6 +182,15 @@ int main(int argc, char **argv) {
                     if (postings[j-2][i].posting_count) {
                         fprintf(stdout, "Docid: %s count: %d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
                     }
+                }
+            }
+        }
+
+        if (merged_postings[0] != NULL) {
+            fprintf(stdout, "\nTop 10 Postings for '%s'\n", argv[j]);
+            for (i=0; i < 10; i++) {
+                if (merged_postings[0][i].posting_count) {
+                    fprintf(stdout, "Docid: %s count: %d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
                 }
             }
         }
@@ -199,6 +230,19 @@ int compare_count(const void *x, const void *y) {
     }
 }
 
+int id_search(int docid, posting *postings, int start, int finish){
+    int m =(finish + start) / 2;
+    if(finish < start){
+        return -1; 
+    }   
+    else if((postings[m].posting_docid < docid)){ 
+        return id_search(docid, postings, start, m - 1); 
+    } else if(postings[m].posting_docid > docid){ 
+        return id_search(docid, postings, m + 1, finish);
+    }else {
+        return postings[m].posting_count;
+    }   
+}
 
 /* Creates 'string' and decompresses docid back to original form */
 /* TODO replace with itoa */
