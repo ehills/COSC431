@@ -90,6 +90,8 @@ char *get_doc_no(const char *docid) {
         
         if (docid[i] != '-') {
             doc[place++] = docid[i];
+        } else {
+            i++;
         }
     }
     doc[place] = '\0';

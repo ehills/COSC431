@@ -776,61 +776,64 @@ case 1:
 YY_RULE_SETUP
 #line 17 "parse.c"
 { 
-    /* Make all lower case */
 
-    int i;
-    for (i =0; yytext[i] != '\0'; i++) {
-        if (yytext[i] >= 'A' && yytext[i] <= 'Z') {
-            yytext[i] = yytext[i] - ('A' -'a');
-        }
-    }
-    
+    toLower(yytext);
     word(yytext); 
     
 } /* eg fred\'s */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 31 "parse.c"
+#line 24 "parse.c"
 { start_tag(yytext); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 32 "parse.c"
+#line 25 "parse.c"
 { end_tag(yytext); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 33 "parse.c"
-{ word(yytext); } /* eg. $24.08 */
+#line 26 "parse.c"
+{ 
+    
+    toLower(yytext);
+    word(yytext); 
+    
+} /* eg. $24.08 */
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 34 "parse.c"
-{ word(yytext); }
+#line 32 "parse.c"
+{ 
+    
+    toLower(yytext);
+    word(yytext); 
+    
+}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 35 "parse.c"
+#line 39 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 36 "parse.c"
+#line 40 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 37 "parse.c"
+#line 41 "parse.c"
 /* eat it up */
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 38 "parse.c"
+#line 42 "parse.c"
 ECHO;
 	YY_BREAK
-#line 834 "lex.yy.c"
+#line 837 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1828,7 +1831,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 38 "parse.c"
+#line 42 "parse.c"
 
 
 
@@ -1839,6 +1842,16 @@ void parse(FILE *stream) {
     yyin = stream;
     yylex();
 
+}
+
+toLower(char *word) {
+
+    int i;
+    for (i =0; word[i] != '\0'; i++) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] = word[i] - ('A' -'a');
+        }
+    }
 }
 
 /** DECISIONS

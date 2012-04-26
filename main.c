@@ -16,20 +16,21 @@
 
 #define NUM_WORDS 900000
 #define MAX_DOCUMENTS 200000
+#define DOCID_LENGTH 15
 
 int compare_count(const void *x, const void *y);
-char *decompress(char *,long);
+char *decompress(char *,int);
 
 typedef struct posting_rec {
 
     int posting_count;
-    long posting_docid;
+    int posting_docid;
 
 } posting;
 
 int main(int argc, char **argv) {
 
-    size_t ave_word_length = 80;
+    size_t ave_word_length = 60;
     size_t bytes_read = 0;
     int i;
     int words_entered = 0;
@@ -42,6 +43,7 @@ int main(int argc, char **argv) {
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
+    int bad_term[argc -2];
 
     posting **postings = emalloc((argc -2) * sizeof(postings[0]));
 
@@ -137,23 +139,27 @@ int main(int argc, char **argv) {
                     bytes_read += (strlen(temp1) + strlen(temp2) + 2);
                     i++;
                 }
+                bad_term[j-2] = -1;
             } else {
-                fprintf(stderr, "Sorry your search term did not return any results\n");
+                bad_term[j-2] = 0;
+                fprintf(stderr, "Sorry your search for '%s' did not return any results.\n", argv[j]);
+                continue;
             }
 
-            // merge here
-            //quick sort to get top hits
+            // merge here -> maybe, should probs be out this loop
             qsort(postings[j-2], i, sizeof(posting), compare_count);
-            // return hits
+            // return hits ^^ see above
 
         }
-
-        char docid_buffer[15]; 
+        
+        char docid_buffer[DOCID_LENGTH]; 
         for (j =2; j < argc; j++) {
-            fprintf(stdout, "\nTop 10 Postings for %s\n", argv[j]);
-            for (i=0; i < 10; i++) {
-                if (postings[j-2][i].posting_count) {
-                fprintf(stdout, "Docid: %s count: %d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+            if (bad_term[j-2] == -1) {
+                fprintf(stdout, "\nTop 10 Postings for '%s'\n", argv[j]);
+                for (i=0; i < 10; i++) {
+                    if (postings[j-2][i].posting_count) {
+                        fprintf(stdout, "Docid: %s count: %d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+                    }
                 }
             }
         }
@@ -193,16 +199,19 @@ int compare_count(const void *x, const void *y) {
     }
 }
 
-char *decompress(char *decompressed_docid, long docid) {
+
+/* Creates 'string' and decompresses docid back to original form */
+/* TODO replace with itoa */
+char *decompress(char *decompressed_docid, int docid) {
     int length;
 
-    sprintf(decompressed_docid, "WSJ%ld", docid);
+    sprintf(decompressed_docid, "WSJ%d", docid);
     length = strlen(decompressed_docid);
 
     decompressed_docid[length] = decompressed_docid[length -1];
     decompressed_docid[length-1] = decompressed_docid[length -2];
     decompressed_docid[length-2] = decompressed_docid[length -3];
-    decompressed_docid[length-3] = decompressed_docid[length -4];
+    decompressed_docid[length-3] = '0';
     decompressed_docid[length-4] = '-';
     decompressed_docid[length + 1] = '\0';
 

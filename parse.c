@@ -15,23 +15,27 @@
 
 %%
 [a-zA-Z]+([\']?[-]?[a-zA-Z])* { 
-    /* Make all lower case */
 
-    int i;
-    for (i =0; yytext[i] != '\0'; i++) {
-        if (yytext[i] >= 'A' && yytext[i] <= 'Z') {
-            yytext[i] = yytext[i] - ('A' -'a');
-        }
-    }
-    
+    toLower(yytext);
     word(yytext); 
     
 } /* eg fred\'s */
 
 "<"[a-zA-Z]+">"   { start_tag(yytext); }
 "</"[a-zA-Z]+">"   { end_tag(yytext); }
-[a-zA-Z]*[\$]?[\.]?[-\+]?[0-9]+([/]?[\.,-][0-9]+)*[\%]?  { word(yytext); } /* eg. $24.08 */
-([a-zA-Z][\.])+               { word(yytext); }
+[a-zA-Z]*[\$]?[\.]?[-\+]?[0-9]+([/]?[\.,-][0-9]+)*[\%]?  { 
+    
+    toLower(yytext);
+    word(yytext); 
+    
+} /* eg. $24.08 */
+([a-zA-Z][\.])+ { 
+    
+    toLower(yytext);
+    word(yytext); 
+    
+}
+
 [\&][a-z\;]+                  /* eat it up */ 
 ["\n"]                        /* eat it up */ 
 .                             /* eat it up */
@@ -44,6 +48,16 @@ void parse(FILE *stream) {
     yyin = stream;
     yylex();
 
+}
+
+toLower(char *word) {
+
+    int i;
+    for (i =0; word[i] != '\0'; i++) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] = word[i] - ('A' -'a');
+        }
+    }
 }
 
 /** DECISIONS
