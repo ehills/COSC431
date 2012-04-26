@@ -15,6 +15,7 @@
 #include <string.h>
 
 #define NUM_WORDS 900000
+#define MAX_DOCUMENTS 120000
 
 int main(int argc, char **argv) {
 
@@ -31,14 +32,14 @@ int main(int argc, char **argv) {
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
-    int *posting_count = emalloc(NUM_WORDS * sizeof(posting_count[0]));
-    long *posting_docid = emalloc(NUM_WORDS * sizeof(posting_docid[0]));
+    int **posting_count = emalloc((argc -2) * sizeof(posting_count[0]));
+    long **posting_docid = emalloc((argc -2) * sizeof(posting_docid[0]));
 
     if (argc < 2) {
         fprintf(stderr, "Please provide a command\n");
         return EXIT_FAILURE;
     }
-    
+
     if (*argv[1] == 'i') {
 
         if (argc < 3) {
@@ -63,7 +64,7 @@ int main(int argc, char **argv) {
 
 
     } else if (*argv[1] == 's') {
-        
+
         if (argc < 3) {
             fprintf(stderr, "Please enter at least one search query\n");
             return EXIT_FAILURE;
@@ -100,20 +101,38 @@ int main(int argc, char **argv) {
 
         // find term from soon to be sorted array then look it up with (see below)
 
-        fseek(postings_file, posting_pos[4], SEEK_SET);
-        temp_word = emalloc(posting_length[4]);
-        fgets(temp_word, posting_length[4], postings_file);
 
-        
-        // load posting stuff into memory
-        i = 0;
-        while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
+        int j;
+        for (j = 2; j < argc; j++) { 
 
-            posting_count[i] = atoi(temp1);
-            posting_docid[i] = atol(temp2);
-            bytes_read += (strlen(temp1) + strlen(temp2) + 2);
-            fprintf(stderr, "%d %ld\n", posting_count[i], posting_docid[i]);
-            i++;
+            i = search(argv[j], dictionary, 0, words_entered-1);
+
+            if (i != -1) {
+
+                fprintf(stderr, "Found %s in %d\n", argv[j], i);
+                posting_count[j -2] = emalloc(MAX_DOCUMENTS * sizeof(int));
+                posting_docid[j -2] = emalloc(MAX_DOCUMENTS * sizeof(long));
+
+                fseek(postings_file, posting_pos[i], SEEK_SET);
+                temp_word = emalloc(posting_length[i]);
+                fgets(temp_word, posting_length[i], postings_file);
+
+                // load posting stuff into memory
+                i = 0;
+                bytes_read = 0;
+                while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
+
+                    posting_count[j -2][i] = atoi(temp1);
+                    posting_docid[j -2][i] = atol(temp2);
+                    bytes_read += (strlen(temp1) + strlen(temp2) + 2);
+                    fprintf(stderr, "%d %ld\n", posting_count[j -2][i], posting_docid[j -2][i]);
+                    i++;
+                }
+            } else {
+                fprintf(stderr, "Sorry your search term did not return any results\n");
+            }
+
+
         }
 
         // get most relevant
@@ -121,17 +140,17 @@ int main(int argc, char **argv) {
         //i = get_max_count_pos(posting_count);            
 
         /* free everything 
-        free(temp1);
-        free(temp2);
-        free(file);
-        free(indexFile);
-        free(postings_file);
-        free(temp_word);
-        free(posting_count);
-        free(posting_docid);
-        free(posting_pos);
-        free(posting_length);
-        free(dictionary); */
+           free(temp1);
+           free(temp2);
+           free(file);
+           free(indexFile);
+           free(postings_file);
+           free(temp_word);
+           free(posting_count);
+           free(posting_docid);
+           free(posting_pos);
+           free(posting_length);
+           free(dictionary); */
 
         /* close postings file */
         if (fclose(postings_file) != 0) {
@@ -144,7 +163,6 @@ int main(int argc, char **argv) {
             fprintf(stderr, "Index file failed to close\n");
             return EXIT_FAILURE;
         }
-
 
     }
 

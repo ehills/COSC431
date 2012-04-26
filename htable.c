@@ -214,9 +214,11 @@ int htable_save_to_disk(htable h, FILE* fp) {
     }
 
     for (i = 0; i <= h->capacity; i++) {
+        if (h->keys[i].key != NULL) {
         length = flexarray_save_to_disk((h->keys[i]).postings, postings_fp);
         fprintf(fp, "%s %d %d\n", (h->keys[i]).key, pos, length);
         pos += length;
+        }
     }
 
     if (fclose(postings_fp) != 0) {
