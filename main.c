@@ -15,7 +15,15 @@
 #include <string.h>
 
 #define NUM_WORDS 900000
-#define MAX_DOCUMENTS 120000
+#define MAX_DOCUMENTS 200000
+
+int compare_count(const void *x, const void *y);
+typedef struct posting_rec {
+
+    int posting_count;
+    long posting_docid;
+
+} posting;
 
 int main(int argc, char **argv) {
 
@@ -32,8 +40,11 @@ int main(int argc, char **argv) {
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
-    int **posting_count = emalloc((argc -2) * sizeof(posting_count[0]));
-    long **posting_docid = emalloc((argc -2) * sizeof(posting_docid[0]));
+
+    posting **postings = emalloc((argc -2) * sizeof(postings[0]));
+
+//    int **posting_count = emalloc((argc -2) * sizeof(posting_count[0]));
+//    long **posting_docid = emalloc((argc -2) * sizeof(posting_docid[0]));
 
     if (argc < 2) {
         fprintf(stderr, "Please provide a command\n");
@@ -101,7 +112,6 @@ int main(int argc, char **argv) {
 
         // find term from soon to be sorted array then look it up with (see below)
 
-
         int j;
         for (j = 2; j < argc; j++) { 
 
@@ -109,9 +119,7 @@ int main(int argc, char **argv) {
 
             if (i != -1) {
 
-                fprintf(stderr, "Found %s in %d\n", argv[j], i);
-                posting_count[j -2] = emalloc(MAX_DOCUMENTS * sizeof(int));
-                posting_docid[j -2] = emalloc(MAX_DOCUMENTS * sizeof(long));
+                postings[j-2] = emalloc(MAX_DOCUMENTS * sizeof(posting));
 
                 fseek(postings_file, posting_pos[i], SEEK_SET);
                 temp_word = emalloc(posting_length[i]);
@@ -122,35 +130,30 @@ int main(int argc, char **argv) {
                 bytes_read = 0;
                 while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
 
-                    posting_count[j -2][i] = atoi(temp1);
-                    posting_docid[j -2][i] = atol(temp2);
+                    postings[j-2][i].posting_count = atoi(temp1);
+                    postings[j-2][i].posting_docid = atol(temp2);
                     bytes_read += (strlen(temp1) + strlen(temp2) + 2);
-                    fprintf(stderr, "%d %ld\n", posting_count[j -2][i], posting_docid[j -2][i]);
                     i++;
                 }
             } else {
                 fprintf(stderr, "Sorry your search term did not return any results\n");
             }
 
+            // merge here
+            //quick sort to get top hits
+            qsort(postings[j-2], i, sizeof(posting), compare_count);
+            // return hits
 
         }
 
-        // get most relevant
-
-        //i = get_max_count_pos(posting_count);            
-
-        /* free everything 
-           free(temp1);
-           free(temp2);
-           free(file);
-           free(indexFile);
-           free(postings_file);
-           free(temp_word);
-           free(posting_count);
-           free(posting_docid);
-           free(posting_pos);
-           free(posting_length);
-           free(dictionary); */
+        for (j =2; j < argc; j++) {
+            fprintf(stdout, "\nTop 10 Postings for %s\n", argv[j]);
+            for (i=0; i < 10; i++) {
+                if (postings[j-2][i].posting_count) {
+                fprintf(stdout, "Docid: %ld count: %d\n", postings[j-2][i].posting_docid, postings[j-2][i].posting_count);
+                }
+            }
+        }
 
         /* close postings file */
         if (fclose(postings_file) != 0) {
@@ -168,5 +171,21 @@ int main(int argc, char **argv) {
 
     return EXIT_SUCCESS;
 
+}
+
+int compare_count(const void *x, const void *y) {
+    
+    posting *ix = (posting *) x;
+    posting *iy = (posting *) y;
+    int count1 = ix->posting_count;
+    int count2 = iy->posting_count;
+
+    if (count1 > count2) {
+        return -1;
+    } else if(count1 < count2) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 

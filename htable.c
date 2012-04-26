@@ -213,12 +213,10 @@ int htable_save_to_disk(htable h, FILE* fp) {
         return EXIT_FAILURE;
     }
 
-    for (i = 0; i <= h->capacity; i++) {
-        if (h->keys[i].key != NULL) {
+    for (i = 0; i < h->num_keys; i++) {
         length = flexarray_save_to_disk((h->keys[i]).postings, postings_fp);
         fprintf(fp, "%s %d %d\n", (h->keys[i]).key, pos, length);
         pos += length;
-        }
     }
 
     if (fclose(postings_fp) != 0) {
@@ -240,7 +238,7 @@ int htable_save_to_disk(htable h, FILE* fp) {
 void htable_print(htable h){
     int i;
 
-    for (i = 0; i < h->capacity; i++){
+    for (i = 0; i < h->num_keys; i++){
         if ((h->keys[i]).key != NULL) {
             printf("%s\t", (h->keys[i]).key);
             flexarray_print((h->keys[i]).postings);
@@ -261,10 +259,10 @@ int compare(const void *x, const void *y) {
         return 0;
     }
     if (key1 == NULL) {
-        return -1;
+        return 1;
     }
     if (key2 == NULL) {
-        return 1;
+        return -1;
     }
     
     return strcmp (key1, key2);

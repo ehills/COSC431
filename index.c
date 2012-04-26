@@ -76,21 +76,23 @@ void word(char const *spelling) {
     if (docno_incoming) {
         curr_docno = atol(get_doc_no(spelling));
     }
-
+    
     htable_insert(dict, spelling, curr_docno);
 }
 
 char *get_doc_no(const char *docid) {
     
-    char* doc = emalloc(sizeof(docid));
+    char *doc = emalloc((strlen(docid) -3) * sizeof(docid[0]));
     int i;
     int place = 0;
     
-    for (i = 3; docid[i] != '\0'; i++) {
+    for (i = 3; i < strlen(docid); i++) {
+        
         if (docid[i] != '-') {
             doc[place++] = docid[i];
         }
     }
+    doc[place] = '\0';
 
     return doc;
 }
