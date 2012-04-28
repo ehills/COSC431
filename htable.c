@@ -51,11 +51,8 @@ htable htable_new(int capacity, hashing_t hashing_type){
     result->capacity = capacity;
     result->num_keys = 0;
     result->keys = emalloc(capacity * sizeof(result->keys[0]));
-    result->count = emalloc(capacity * sizeof(int));
+    result->count = calloc(capacity, sizeof(int));
     result->hashing_type = hashing_type;
-    for (i = 0; i < capacity; i++){
-        result->count[i] = 0;
-    }
     return result;
 }
 
@@ -101,6 +98,7 @@ void htable_delete(htable h){
      //   free(h->keys[i]);
   //  }
     free(h->count);
+    // TODO add delete_keys functions (need to free posting?)
     free(h->keys);
     free(h);
 }
