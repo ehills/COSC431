@@ -157,13 +157,10 @@ int main(int argc, char **argv) {
 
             if (j >= 3) {
 
-                merged_postings[1] = erealloc(merged_postings[1], post_count * sizeof(posting));
+                merged_postings[1] = emalloc(merged_count * sizeof(posting));
                 new_count = 0;
                 for (i = 0; i < post_count; i++) {
 
-              //      if (&(postings[j-2][i]) == NULL) {
-              //          continue;
-              //      }
                     if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
                         merged_postings[1][new_count].posting_docid = postings[j-2][i].posting_docid;
                         merged_postings[1][new_count].posting_count = postings[j-2][i].posting_count + result;
@@ -174,7 +171,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
                 merged_count = new_count;
-                merged_postings[0] = erealloc(merged_postings[0], post_count * sizeof(posting));
+                //merged_postings[0] = erealloc(merged_postings[0], new_count * sizeof(posting));
                 merged_postings[0] = merged_postings[1];
 
             } else {
@@ -182,37 +179,36 @@ int main(int argc, char **argv) {
                 for (i = 0; i < post_count; i++) {
                     merged_postings[0][i] = postings[j-2][i];
                 }
-                merged_postings[1] = emalloc(sizeof(posting));
                 merged_count = post_count;
             }
 
-        }
+        } // end proccessing
 
 
         /* displays the postings for each term */
         for (j = 2; j < argc; j++) {
-        if (bad_term[j-2] == -1) {
-            qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
-            fprintf(stdout, "Top 10 Postings for '%s'\n", argv[j]);
-            fprintf(stdout, "Docid\t\tTimes term found\n");
-            for (i=0; i < 10; i++) {
-                if (postings[j-2][i].posting_count) {
+            if (bad_term[j-2] == -1) {
+                qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
+                fprintf(stdout, "Top 10 Postings for '%s'\n", argv[j]);
+                fprintf(stdout, "\nDocid\t\tTimes term found\n");
+                for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
                     fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
                 }
+                fprintf(stdout, "\n");
             }
         }
-        }
+
         /* displays the postings for the merged list */
         if (merged_postings[0] != NULL) {
             qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
-            fprintf(stdout, "\nTop 10 Merged Postings for ");
+            fprintf(stdout, "Top 10 Merged Postings for ");
             for (j=2; j < argc; j++) {
                 if (bad_term[j-2] == -1) { 
                     fprintf(stdout, "'%s' ", argv[j]);
                 }
             }
             fprintf(stdout, "\nDocid\t\tTimes terms found (word frequency combined)\n");
-            for (i=0; i < 10; i++) {
+            for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
                 fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
             }
         }
