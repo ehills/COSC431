@@ -11,27 +11,24 @@
 %{
 #include <stdio.h>
 #include "index.h"
+#include "mylib.h"
 
-void toLower(char *);
-
-void toLower(char *word) {
-
-    int i;
-    for (i =0; word[i] != '\0'; i++) {
-        if (word[i] >= 'A' && word[i] <= 'Z') {
-            word[i] = word[i] - ('A' -'a');
-        }
-    }
-}
 %}
 
 %%
-[a-zA-Z]+([\']?[-]?[a-zA-Z])* { 
+[a-zA-Z]+ { 
 
     toLower(yytext);
     word(yytext); 
     
-} /* eg fred\'s */
+} /* eg fred */
+
+[\'][a-zA-Z]+[\'] {
+
+    toLower(yytext);
+    word(yytext);
+}
+
 
 "<"[a-zA-Z]+">"   { start_tag(yytext); }
 "</"[a-zA-Z]+">"   { end_tag(yytext); }
@@ -62,10 +59,3 @@ void parse(FILE *stream) {
 
 }
 
-
-/** DECISIONS
-*   Chose not to include "quoted sentences as one word"
-*   Chose not to include words thats end with a single quote
-*   Chose to remove the &amp; entities and treat surrouding words separately
-*   Chose to index the dates as numbers without slashes
-*/

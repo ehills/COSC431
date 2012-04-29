@@ -15,6 +15,7 @@
 #include "posting.c"
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #define NUM_WORDS 900000
 #define MAX_DOCUMENTS 173252
@@ -28,7 +29,6 @@ int id_search(int, posting *, int, int);
 int do_index(char *);
 int do_search(char **, int, int);
 void usage(void);
-
 
 /* Will either search the index or index the file given to it */
 int main(int argc, char **argv) {
@@ -67,18 +67,20 @@ int main(int argc, char **argv) {
 
 }
 
+/* displays usage to the user */
 void usage(void) {
 
     fprintf(stderr, "\nPlease provide valid commands.\n");
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "-i\tfile_to_index\tThis will index the file you have passed to it.\n");
+    fprintf(stderr, "-i\twsj-file\tThis will index the file you have passed to it.\n");
     fprintf(stderr, "-s\tsearch_term(s)\tThis will search for term(s) you have provided.\n");
     fprintf(stderr, "-v\tsearch_term(s)\tThis will search for term(s) you have provided but will\n");
     fprintf(stderr, "\t\t\toutput the individual results as well as combined results.\n");
-    fprintf(stderr, "-h\t\tPrints this usage.\n");
+    fprintf(stderr, "-h\t\t\tPrints this usage.\n");
 
 }
 
+/* indexes the file given to it */
 int do_index(char *filename) {
     FILE *file = NULL;
 
@@ -103,26 +105,28 @@ int do_index(char *filename) {
 int do_search(char **argv, int argc, int verbosity) {
     size_t ave_word_length = AVE_WORD_LENGTH;
     char docid_buffer[DOCID_LENGTH]; 
-    size_t bytes_read = 0;
     int i, j;
     unsigned int density = 0;
     int words_entered = 0;
-    char temp1[AVE_WORD_LENGTH], temp2[AVE_WORD_LENGTH];
+    char *temp1;
+    /* Set up file pointers */
     FILE *indexFile = NULL;
     FILE *postings_file = NULL;
     FILE *word_count_file = NULL;
     char *temp_word = emalloc(AVE_WORD_LENGTH + 1);
+    /* dictionary to store all terms */
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
+    /* store location and length of postings on disk */
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
     int *bad_term;
     int post_count;
-    int merged_count = 0;
-    int result = 0;
-    int new_count = 0;
-    int word_count = 0;
+    int merged_count, result, new_count, word_count = 0;
+    /* store the postings once they have been merged */
     posting **merged_postings = emalloc(2 * sizeof(merged_postings[0]));
+    /* store postings read in */
     posting **postings = emalloc((argc -2) * sizeof(postings[0]));
+    /* store the number of words per document */
     posting *doc_num_words = emalloc(MAX_DOCUMENTS * sizeof(postings[0]));
     int *num_post_per_term = emalloc(15 * sizeof(int));
     merged_postings[0] = NULL;
@@ -177,54 +181,54 @@ int do_search(char **argv, int argc, int verbosity) {
 
         i = search(argv[j], dictionary, 0, words_entered-1);
 
+        post_count = 0;
         if (i != -1) {
 
             postings[j-2] = emalloc(sizeof(posting));
-
+    
+            /* read from disk */
             fseek(postings_file, posting_pos[i], SEEK_SET);
-            temp_word = emalloc(posting_length[i]);
-            fgets(temp_word, posting_length[i], postings_file);
+            temp_word = emalloc(posting_length[i] + 1);
+            fread(temp_word, posting_length[i], sizeof(char), postings_file);
+            temp_word[posting_length[i]] = '\0';
 
             /* load posting stuff into memory */
-            post_count = 0;
-            bytes_read = 0;
-            while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
+            
+            /* need to do this just the once */
+            temp1 = strtok(temp_word, " ");
+            postings[j-2][post_count].posting_docid = atoi(strtok(NULL, "\t"));
+            word_count = id_search(postings[j-2][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
+            /* Calculate density of term in doc */
+            density = word_count / atoi(temp1);
+            postings[j-2][post_count].posting_count = density;
+            post_count++;
 
-                if (post_count != 0) { 
-                    postings[j-2] = erealloc(postings[j-2], (post_count + 1) * sizeof(posting));
-                }
-                
-                postings[j-2][post_count].posting_docid = atoi(temp2);
+            while((temp1 = strtok(NULL, " ")) != NULL) {
+                postings[j-2] = erealloc(postings[j-2], (post_count + 1) * sizeof(posting));
+
+                postings[j-2][post_count].posting_docid = atoi(strtok(NULL, "\t"));
                 word_count = id_search(postings[j-2][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
-                
-                if (word_count < 0) {
-                    fprintf(stderr, "uh oh word count: %d\n", word_count);
-                    fprintf(stderr, "Was looking for docid %d but didnt find it\n", postings[j-2][post_count].posting_docid);
-                }
-
                 /* Calculate density of term in doc */
                 density = word_count / atoi(temp1);
-                if (density < 0) {
-                    fprintf(stderr, "uh oh density: %d\n", density);
-                }
 
                 postings[j-2][post_count].posting_count = density;
 
-                bytes_read += (strlen(temp1) + strlen(temp2) + 2);
                 post_count++;
             }
+
+
             bad_term[j-2] = -1;
             num_post_per_term[j-2] = post_count;
 
         } else {
-            fprintf(stderr, "Sorry your term %s found no results.\n", argv[j]);
+            fprintf(stderr, "Sorry your term '%s' found no results.\n", argv[j]);
             bad_term[j-2] = 0;
             continue;
         }
 
 
         /* Merge results from previous term and this term */
-        if (j >= 3) {
+        if (j >= 3 && bad_term[0]) {
 
             merged_postings[1] = emalloc(merged_count * sizeof(posting));
             new_count = 0;
@@ -232,9 +236,6 @@ int do_search(char **argv, int argc, int verbosity) {
 
                 if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
                     density = result * postings[j-2][i].posting_count; 
-                    if (density < 0) {
-                        fprintf(stderr, "really uh oh density: %d probs blew size limit\n", density);
-                    }
                     merged_postings[1][new_count].posting_docid = postings[j-2][i].posting_docid;
                     merged_postings[1][new_count].posting_count = density ;
                     new_count++;
@@ -269,10 +270,9 @@ int do_search(char **argv, int argc, int verbosity) {
     if (verbosity) {
         for (j = 2; j < argc; j++) {
             if (bad_term[j-2] == -1) {
-                /* Sort on count TODO change to sort on relevance */
                 qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
-                fprintf(stdout, "Top 10 Documents containing '%s'\n", argv[j]);
-                fprintf(stdout, "\nDocid\t\tRelevance Rank\n");
+                fprintf(stderr, "Top 10 Documents containing '%s'\n", argv[j]);
+                fprintf(stderr, "\nDocid\t\tRelevance Rank\n");
                 for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
                     fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), i);
                 }
@@ -284,13 +284,13 @@ int do_search(char **argv, int argc, int verbosity) {
     /* displays the postings for the merged list */
     if (merged_postings[0] != NULL) {
         qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
-        fprintf(stdout, "Top 10 Documents containing ");
+        fprintf(stderr, "Top 10 Documents containing ");
         for (j=2; j < argc; j++) {
             if (bad_term[j-2] == -1) { 
-                fprintf(stdout, "'%s' ", argv[j]);
+                fprintf(stderr, "'%s' ", argv[j]);
             }
         }
-        fprintf(stdout, "\n\nDocid\t\tRelevance Rank\n");
+        fprintf(stderr, "\n\nDocid\t\tRelevance Rank\n");
         for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
             fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), i);
         }
@@ -349,3 +349,13 @@ char *decompress(char *decompressed_docid, int docid) {
 
     return decompressed_docid;
 }
+
+void toLower(char *word) {
+    int i;
+    for (i = 0; word[i] != '\0'; i++) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] = word[i] - ('A' -'a');
+        }
+    }
+}
+
