@@ -142,7 +142,7 @@ static unsigned int htable_step(htable h, unsigned int i_key) {
  * @param s the value to be inserted into the hash table.
  * @return returns whether the value was inserted successfully or not.
  */
-int htable_insert(htable h, const char *s, long docid){
+int htable_insert(htable h, const char *s, int docid){
     int collisions;
     int position = htable_word_to_int(s) % h-> capacity;
     int step = htable_step(h, htable_word_to_int(s));

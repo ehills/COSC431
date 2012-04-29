@@ -18,10 +18,10 @@
 #define MAX_DOCUMENTS 200000
 #define DOCID_LENGTH 15
 
-int compare_docid(const void *x, const void *y);
 int compare_count(const void *x, const void *y);
 char *decompress(char *,int);
 
+/* Struct to store individual posting */
 typedef struct posting_rec {
 
     int posting_count;
@@ -29,6 +29,9 @@ typedef struct posting_rec {
 
 } posting;
 
+/* TODO make it not bohemoth. Separate out functions for searching. Add methods and tidy up code. Very rough and not at all happy with this */
+
+/* Bohemoth main method will either search or index the wall street journal collection. If search it will read in a list of terms from the command line, load in the index from disk and for each query term get the list of postings related to that term and display it. */
 int main(int argc, char **argv) {
 
     size_t ave_word_length = 60;
@@ -55,6 +58,8 @@ int main(int argc, char **argv) {
     int *num_post_per_term = emalloc(15 * sizeof(int));
     merged_postings[0] = NULL;
     merged_postings[1] = NULL;
+    int bad_term_merged[argc -2];
+    int display_all = 0;
 
     if (argc < 2) {
         fprintf(stderr, "Please provide a command\n");
@@ -144,14 +149,12 @@ int main(int argc, char **argv) {
                 bad_term[j-2] = -1;
                 num_post_per_term[j-2] = post_count;
 
-                if (argc > 3) {
-                    qsort(postings[j-2], post_count, sizeof(posting), compare_docid);
-                } else {
-                    break;
-                }
+                //         if (argc <= 3) {
+                //           break;
+                //      }
             } else {
+                fprintf(stderr, "Sorry your term %s found no results.\n", argv[j]);
                 bad_term[j-2] = 0;
-                fprintf(stderr, "Sorry your search for '%s' did not return any results.\n", argv[j]);
                 continue; // move onto next term
             }
 
@@ -168,10 +171,12 @@ int main(int argc, char **argv) {
                     }
                 }
                 if (new_count == 0) {
-                    continue;
+                    free(merged_postings[1]);
+                    free(merged_postings[0]);
+                    merged_postings[0] = NULL;
+                    break;
                 }
                 merged_count = new_count;
-                //merged_postings[0] = erealloc(merged_postings[0], new_count * sizeof(posting));
                 merged_postings[0] = merged_postings[1];
 
             } else {
@@ -184,24 +189,27 @@ int main(int argc, char **argv) {
 
         } // end proccessing
 
+        /* TODO set up a command line flag and if display all is set then display all individual results as well as merged results */
 
-        /* displays the postings for each term */
-        for (j = 2; j < argc; j++) {
-            if (bad_term[j-2] == -1) {
-                qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
-                fprintf(stdout, "Top 10 Postings for '%s'\n", argv[j]);
-                fprintf(stdout, "\nDocid\t\tTimes term found\n");
-                for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
-                    fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+        if (display_all == 1) {
+            /* displays the postings for each term */
+            for (j = 2; j < argc; j++) {
+                if (bad_term[j-2] == -1) {
+                    qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
+                    fprintf(stdout, "Top 10 Documents containing '%s'\n", argv[j]);
+                    fprintf(stdout, "\nDocid\t\tTimes term found\n");
+                    for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
+                        fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+                    }
+                    fprintf(stdout, "\n");
                 }
-                fprintf(stdout, "\n");
             }
         }
 
         /* displays the postings for the merged list */
         if (merged_postings[0] != NULL) {
             qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
-            fprintf(stdout, "Top 10 Merged Postings for ");
+            fprintf(stdout, "Top 10 Documents containing ");
             for (j=2; j < argc; j++) {
                 if (bad_term[j-2] == -1) { 
                     fprintf(stdout, "'%s' ", argv[j]);
@@ -211,6 +219,8 @@ int main(int argc, char **argv) {
             for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
                 fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
             }
+        } else {
+            fprintf(stderr, "Sorry no documents were found containing all the terms in your query. Please search for something else.\n");
         }
 
         /* close postings file */
@@ -248,22 +258,6 @@ int compare_count(const void *x, const void *y) {
     }
 }
 
-int compare_docid(const void *x, const void *y) {
-
-    posting *ix = (posting *) x;
-    posting *iy = (posting *) y;
-    int docid1 = ix->posting_docid;
-    int docid2 = iy->posting_docid;
-
-    if (docid1 > docid2) {
-        return 1;
-    } else if(docid1 < docid2) {
-        return -1;
-    } else {
-        return 0;
-    }
-}
-
 /* binary searches the docid list and returns the posting count */
 int id_search(int docid, posting *postings, int start, int finish){
     int m =(finish + start) / 2;
@@ -280,7 +274,7 @@ int id_search(int docid, posting *postings, int start, int finish){
     }   
 }
 
-/* Creates 'string' and decompresses docid back to original form */
+/* Creates docid to be displayed to the user */
 char *decompress(char *decompressed_docid, int docid) {
     int length = 0;
 

@@ -19,7 +19,7 @@ char const *index_file_name = "wsj-index";
 int docno_incoming = 0;
 htable dict;
 unsigned int count = 0;
-long curr_docno;
+int curr_docno;
 
 /* 
 * This method will begin indexing and set up all things that it needs.
@@ -74,7 +74,7 @@ void end_tag(char const *name) {
 void word(char const *spelling) {
 
     if (docno_incoming) {
-        curr_docno = atol(get_doc_no(spelling));
+        curr_docno = atoi(get_doc_no(spelling));
     }
     
     htable_insert(dict, spelling, curr_docno);
