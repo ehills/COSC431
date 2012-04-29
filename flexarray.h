@@ -2,6 +2,7 @@
 #define FLEXARRAY_H_
 
 typedef struct flexarrayrec *flexarray;
+typedef struct flex_posting_rec flex_posting;
 
 extern flexarray flexarray_new();
 extern void flexarray_append(flexarray, int);

@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 
+typedef struct index_posting_rec index_posting;
 extern void begin_indexing(void);
 extern void end_indexing(void);
 extern void start_tag(char const *);

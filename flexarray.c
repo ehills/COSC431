@@ -2,24 +2,28 @@
 #include <stdlib.h>
 #include "mylib.h"
 #include "flexarray.h"
-#include "posting.c"
 
 /* flexarray struct to store my dynamically size array */
 /* TODO separate out functionality of that of flexarray and postings */
 struct flexarrayrec {
     int capacity;
     int no_of_documents;
-    posting* postings;
+    flex_posting* postings;
 };
 
+struct flex_posting_rec {
 
+    int posting_count;
+    int posting_docid;
+
+};
 
 /* Initialises new flexarray */
 flexarray flexarray_new(){
     flexarray result = emalloc(sizeof(result));
     result->capacity = 2;
     result->no_of_documents = 0;
-    result->postings = emalloc((result->capacity) * sizeof(posting));
+    result->postings = emalloc((result->capacity) * sizeof(flex_posting));
     return result;
 }
 
@@ -28,7 +32,7 @@ unsigned int flexarray_save_to_disk(flexarray f, FILE* fp) {
     int i;
     unsigned int length = 0;
 
-    qsort(f->postings, f->no_of_documents, sizeof(posting), flex_compare_docid);
+    qsort(f->postings, f->no_of_documents, sizeof(flex_posting), flex_compare_docid);
     for (i = 0; i < f->no_of_documents; i++) {
         length += fprintf(fp, "%d %d\t", f->postings[i].posting_count, f->postings[i].posting_docid);
     }
@@ -53,7 +57,7 @@ long flexarray_get_last_id(flexarray f) {
 void flexarray_append(flexarray f, int doc){
     if (f->no_of_documents == f-> capacity){
         f->capacity *= 2;
-        f->postings = erealloc(f->postings, (f->capacity) * sizeof(posting));
+        f->postings = erealloc(f->postings, (f->capacity) * sizeof(flex_posting));
     }
     f->postings[f->no_of_documents].posting_count = 1;
     f->postings[f->no_of_documents++].posting_docid = doc;
@@ -76,8 +80,8 @@ void flexarray_delete(flexarray f){
 
 /* Compare docids. Used in qsort */
 int flex_compare_docid(const void *x, const void *y) {
-    posting *ix = (posting *)x;
-    posting *iy = (posting *)y;
+    flex_posting *ix = (flex_posting *)x;
+    flex_posting *iy = (flex_posting *)y;
     int docid1 = ix->posting_docid;
     int docid2 = iy->posting_docid;
 

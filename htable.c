@@ -32,6 +32,7 @@ struct htablerec{
 struct key_value_rec {
     char *key;
     flexarray postings;
+    int term_freq;
 };
 
 /**
@@ -147,6 +148,7 @@ int htable_insert(htable h, const char *s, int docid){
             strcpy((h->keys[position]).key, s);
             (h->keys[position]).postings = flexarray_new();
             flexarray_append((h->keys[position]).postings, docid);
+            h->keys[position].term_freq = 1;
             h->num_keys++;
             h->count[position]++;
             return 1;
@@ -156,6 +158,7 @@ int htable_insert(htable h, const char *s, int docid){
 
             if (flexarray_get_last_id((h->keys[position]).postings) != docid) {
                 flexarray_append((h->keys[position]).postings, docid);
+                h->keys[position].term_freq++;
             } else {
                 flexarray_updatecount((h->keys[position]).postings);
             }
@@ -208,7 +211,7 @@ int htable_save_to_disk(htable h, FILE* fp) {
 
     for (i = 0; i < h->num_keys; i++) {
         length = flexarray_save_to_disk((h->keys[i]).postings, postings_fp);
-        fprintf(fp, "%s %d %d\n", (h->keys[i]).key, pos, length);
+        fprintf(fp, "%s %d %d %d\n", (h->keys[i]).key, pos, length, h->keys[i].term_freq);
         pos += length;
     }
 

@@ -12,7 +12,7 @@
 #include "mylib.h"
 #include "htable.h"
 #include <string.h>
-#include "posting.c"
+#include "flexarray.h"
 #define NUM_WORDS 900000 /* ~750,000 unique words */
 #define MAX_DOCS 173252 /* ~750,000 unique words */
 
@@ -26,7 +26,14 @@ unsigned int count = 0;
 int docs_entered = 0;
 int curr_docno =0;
 int word_count = 0;
-posting *postings;
+index_posting *postings;
+
+struct index_posting_rec {
+
+    int posting_count;
+    int posting_docid;
+
+};
 
 /* 
 * This method will begin indexing and set up all things that it needs.
@@ -60,9 +67,8 @@ void end_indexing(void) {
     postings[docs_entered].posting_count = word_count;
     docs_entered++;
 
-    qsort(postings, docs_entered, sizeof(posting), compare_docid);
+    qsort(postings, docs_entered, sizeof(index_posting), compare_docid);
     save_word_count();
-/*    htable_delete(dict); */
 
     if (fclose(fp) < 0) {
         perror("Closing file.");
@@ -146,8 +152,8 @@ void save_word_count(void) {
 
 /* Compare docids. Used in qsort */
 int compare_docid(const void *x, const void *y) {
-    posting *ix = (posting *)x;
-    posting *iy = (posting *)y;
+    index_posting *ix = (index_posting *)x;
+    index_posting *iy = (index_posting *)y;
     int docid1 = ix->posting_docid;
     int docid2 = iy->posting_docid;
 

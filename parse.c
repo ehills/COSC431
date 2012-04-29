@@ -8,10 +8,12 @@
 */
 
 %option noyywrap
+%option nounput
+%option noinput
 %{
 #include <stdio.h>
-#include "index.h"
 #include "mylib.h"
+#include "index.h"
 
 %}
 
@@ -23,12 +25,14 @@
     
 } /* eg fred */
 
-[\'][a-zA-Z]+[\'] {
+[a-zA-Z]+[\'][a-zA-Z]{2,} {
 
     toLower(yytext);
     word(yytext);
+
 }
 
+[\'][a-z] { /* eat it up */ }
 
 "<"[a-zA-Z]+">"   { start_tag(yytext); }
 "</"[a-zA-Z]+">"   { end_tag(yytext); }
