@@ -22,4 +22,5 @@ extern int htable_search(htable h, const char *s);
 extern void htable_print(htable h);
 extern int htable_save_to_disk(htable h, FILE*);
 extern int compare(const void *, const void *);
+
 #endif

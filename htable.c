@@ -16,7 +16,6 @@
 #include "flexarray.h"
 #include <string.h>
 
-
 /**
  * Sets the attributes that the htable will have, it will store the capacity,
  * number of items entered, the values as well as how frequent they appear,
@@ -167,6 +166,7 @@ int htable_insert(htable h, const char *s, int docid){
     }
     return 0;
 }
+
 
 /**
  * Searches the hash table for the given value.
