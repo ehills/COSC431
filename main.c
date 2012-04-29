@@ -12,43 +12,42 @@
 #include "mylib.h"
 #include "index.h"
 #include "flexarray.h"
+#include "posting.c"
 #include <string.h>
 
 #define NUM_WORDS 900000
 #define MAX_DOCUMENTS 200000
 #define DOCID_LENGTH 15
+#define AVE_WORD_LENGTH 50
 
-int compare_count(const void *x, const void *y);
-char *decompress(char *,int);
 
 /* Struct to store individual posting */
-typedef struct posting_rec {
 
-    int posting_count;
-    int posting_docid;
-
-} posting;
+int compare_count(const void *, const void *);
+char *decompress(char *,int);
+int id_search(int, posting *, int, int);
 
 /* TODO make it not bohemoth. Separate out functions for searching. Add methods and tidy up code. Very rough and not at all happy with this */
 
 /* Bohemoth main method will either search or index the wall street journal collection. If search it will read in a list of terms from the command line, load in the index from disk and for each query term get the list of postings related to that term and display it. */
 int main(int argc, char **argv) {
 
-    size_t ave_word_length = 60;
+    size_t ave_word_length = AVE_WORD_LENGTH;
     char docid_buffer[DOCID_LENGTH]; 
     size_t bytes_read = 0;
     int i;
+    int j;
     int words_entered = 0;
-    char temp1[ave_word_length];
-    char temp2[ave_word_length];
+    char temp1[AVE_WORD_LENGTH];
+    char temp2[AVE_WORD_LENGTH];
     FILE *file = NULL;
     FILE *indexFile = NULL;
     FILE *postings_file = NULL;
-    char *temp_word = emalloc(ave_word_length + 1);
+    char *temp_word = emalloc(AVE_WORD_LENGTH + 1);
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
     int *posting_length = emalloc(NUM_WORDS * sizeof(posting_length[0]));
-    int bad_term[argc -2];
+    int *bad_term;
     int post_count;
     int merged_count = 0;
     int result = 0;
@@ -56,10 +55,9 @@ int main(int argc, char **argv) {
     posting **merged_postings = emalloc(2 * sizeof(merged_postings[0]));
     posting **postings = emalloc((argc -2) * sizeof(postings[0]));
     int *num_post_per_term = emalloc(15 * sizeof(int));
+    int display_all= 0;
     merged_postings[0] = NULL;
     merged_postings[1] = NULL;
-    int bad_term_merged[argc -2];
-    int display_all = 0;
 
     if (argc < 2) {
         fprintf(stderr, "Please provide a command\n");
@@ -103,6 +101,8 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
+        bad_term = emalloc((argc-2) * sizeof(int));
+
         /* initial loadup */
         while (getline(&temp_word, &ave_word_length, indexFile) != EOF) {
             dictionary[words_entered] = emalloc((strlen(temp_word) + 1) * sizeof(char));
@@ -119,8 +119,7 @@ int main(int argc, char **argv) {
             return EXIT_FAILURE;
         }
 
-        // Get all docids related to this term then sort by docid for further searching
-        int j;
+        /* Get all docids related to this term then sort by docid for further searching */
         for (j = 2; j < argc; j++) { 
 
             i = search(argv[j], dictionary, 0, words_entered-1);
@@ -133,7 +132,7 @@ int main(int argc, char **argv) {
                 temp_word = emalloc(posting_length[i]);
                 fgets(temp_word, posting_length[i], postings_file);
 
-                // load posting stuff into memory
+                /* load posting stuff into memory */
                 post_count = 0;
                 bytes_read = 0;
                 while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
@@ -149,13 +148,10 @@ int main(int argc, char **argv) {
                 bad_term[j-2] = -1;
                 num_post_per_term[j-2] = post_count;
 
-                //         if (argc <= 3) {
-                //           break;
-                //      }
             } else {
                 fprintf(stderr, "Sorry your term %s found no results.\n", argv[j]);
                 bad_term[j-2] = 0;
-                continue; // move onto next term
+                continue;
             }
 
             if (j >= 3) {
@@ -187,11 +183,11 @@ int main(int argc, char **argv) {
                 merged_count = post_count;
             }
 
-        } // end proccessing
+        } /* end proccessing */
 
         /* TODO set up a command line flag and if display all is set then display all individual results as well as merged results */
 
-        if (display_all == 1) {
+        if (display_all == 0) {
             /* displays the postings for each term */
             for (j = 2; j < argc; j++) {
                 if (bad_term[j-2] == -1) {
@@ -215,7 +211,7 @@ int main(int argc, char **argv) {
                     fprintf(stdout, "'%s' ", argv[j]);
                 }
             }
-            fprintf(stdout, "\nDocid\t\tTimes terms found (word frequency combined)\n");
+            fprintf(stdout, "\n\nDocid\t\tTimes terms found (word frequency combined)\n");
             for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
                 fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
             }

@@ -11,6 +11,18 @@
 %{
 #include <stdio.h>
 #include "index.h"
+
+void toLower(char *);
+
+void toLower(char *word) {
+
+    int i;
+    for (i =0; word[i] != '\0'; i++) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] = word[i] - ('A' -'a');
+        }
+    }
+}
 %}
 
 %%
@@ -50,15 +62,6 @@ void parse(FILE *stream) {
 
 }
 
-toLower(char *word) {
-
-    int i;
-    for (i =0; word[i] != '\0'; i++) {
-        if (word[i] >= 'A' && word[i] <= 'Z') {
-            word[i] = word[i] - ('A' -'a');
-        }
-    }
-}
 
 /** DECISIONS
 *   Chose not to include "quoted sentences as one word"

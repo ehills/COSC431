@@ -7,5 +7,5 @@
 
 #include <stdio.h>
 extern void parse(FILE *);
+extern void toLower(char *);
 
-// end parse.h

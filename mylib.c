@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "mylib.h"
 #include "htable.h"
+#include <string.h>
 
 void *emalloc(size_t s){
    void *result = malloc(s);

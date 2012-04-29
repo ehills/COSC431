@@ -44,7 +44,6 @@ struct key_value_rec {
  * @return htable the new hash-table.
  */
 htable htable_new(int capacity, hashing_t hashing_type){
-    int i;
     htable result = emalloc(sizeof(*result));
 
     capacity = find_prime(capacity);
@@ -92,13 +91,9 @@ int is_prime(int candidate) {
  * @param h the htable to be freed.
  */
 void htable_delete(htable h){
-    int i;
 
-    //for (i = 0; i < h->capacity; i++){
-     //   free(h->keys[i]);
-  //  }
+    /* TODO add delete_keys functions (need to free posting?) */
     free(h->count);
-    // TODO add delete_keys functions (need to free posting?)
     free(h->keys);
     free(h);
 }

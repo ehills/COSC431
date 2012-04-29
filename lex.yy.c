@@ -500,7 +500,19 @@ char *yytext;
 #line 12 "parse.c"
 #include <stdio.h>
 #include "index.h"
-#line 504 "lex.yy.c"
+
+void toLower(char *);
+
+void toLower(char *word) {
+
+    int i;
+    for (i =0; word[i] != '\0'; i++) {
+        if (word[i] >= 'A' && word[i] <= 'Z') {
+            word[i] = word[i] - ('A' -'a');
+        }
+    }
+}
+#line 516 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -687,9 +699,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 16 "parse.c"
+#line 28 "parse.c"
 
-#line 693 "lex.yy.c"
+#line 705 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -774,7 +786,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 17 "parse.c"
+#line 29 "parse.c"
 { 
 
     toLower(yytext);
@@ -784,17 +796,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 24 "parse.c"
+#line 36 "parse.c"
 { start_tag(yytext); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 25 "parse.c"
+#line 37 "parse.c"
 { end_tag(yytext); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 26 "parse.c"
+#line 38 "parse.c"
 { 
     
     toLower(yytext);
@@ -804,7 +816,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 32 "parse.c"
+#line 44 "parse.c"
 { 
     
     toLower(yytext);
@@ -814,26 +826,26 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 39 "parse.c"
+#line 51 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 40 "parse.c"
+#line 52 "parse.c"
 /* eat it up */ 
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 41 "parse.c"
+#line 53 "parse.c"
 /* eat it up */
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 42 "parse.c"
+#line 54 "parse.c"
 ECHO;
 	YY_BREAK
-#line 837 "lex.yy.c"
+#line 849 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1831,7 +1843,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 42 "parse.c"
+#line 54 "parse.c"
 
 
 
@@ -1844,15 +1856,6 @@ void parse(FILE *stream) {
 
 }
 
-toLower(char *word) {
-
-    int i;
-    for (i =0; word[i] != '\0'; i++) {
-        if (word[i] >= 'A' && word[i] <= 'Z') {
-            word[i] = word[i] - ('A' -'a');
-        }
-    }
-}
 
 /** DECISIONS
 *   Chose not to include "quoted sentences as one word"

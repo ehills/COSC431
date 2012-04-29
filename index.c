@@ -12,7 +12,7 @@
 #include "mylib.h"
 #include "htable.h"
 #include <string.h>
-#define NUM_WORDS 900000 // ~750,000 unique words
+#define NUM_WORDS 900000 /* ~750,000 unique words */
 
 FILE *fp;
 char const *index_file_name = "wsj-index";
@@ -41,7 +41,7 @@ void begin_indexing(void) {
 void end_indexing(void) {
 
     htable_save_to_disk(dict, fp);
-//    htable_delete(dict);
+/*    htable_delete(dict); */
 
     if (fclose(fp) < 0) {
         perror("Closing file.");
@@ -99,4 +99,4 @@ char *get_doc_no(const char *docid) {
     return doc;
 }
 
-// end index.c
+/* end index.c */
