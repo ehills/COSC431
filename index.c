@@ -12,7 +12,9 @@
 #include "mylib.h"
 #include "htable.h"
 #include <string.h>
+#include "posting.c"
 #define NUM_WORDS 900000 /* ~750,000 unique words */
+#define MAX_DOCS 173251 /* ~750,000 unique words */
 
 FILE *fp;
 FILE *word_count_fp;
@@ -21,8 +23,10 @@ char const *word_count_filename = "wsj-doc_word_count";
 int docno_incoming = 0;
 htable dict;
 unsigned int count = 0;
-int curr_docno;
+int docs_entered = 0;
+int curr_docno =0;
 int word_count = 0;
+posting *postings;
 
 /* 
 * This method will begin indexing and set up all things that it needs.
@@ -40,6 +44,7 @@ void begin_indexing(void) {
         exit(EXIT_FAILURE);
     }
 
+    postings = emalloc(MAX_DOCS * sizeof(postings[0]));
     dict = htable_new(NUM_WORDS, DOUBLE_H);
 
 }
@@ -50,6 +55,8 @@ void begin_indexing(void) {
 void end_indexing(void) {
 
     htable_save_to_disk(dict, fp);
+    qsort(postings, docs_entered, sizeof(posting), compare_docid);
+    save_word_count();
 /*    htable_delete(dict); */
 
     if (fclose(fp) < 0) {
@@ -87,11 +94,15 @@ void end_tag(char const *name) {
 */
 void word(char const *spelling) {
 
-    word_count++;
     if (!docno_incoming) {
+        word_count++;
         htable_insert(dict, spelling, curr_docno);
     } else {
-        save_word_count(curr_docno, word_count);
+        if (curr_docno != 0) { 
+            postings[docs_entered].posting_docid = curr_docno;
+            postings[docs_entered].posting_count = word_count;
+            docs_entered++;
+        }
         curr_docno = atoi(get_doc_no(spelling));
         word_count =1;
         htable_insert(dict, spelling, curr_docno);
@@ -120,8 +131,29 @@ char *get_doc_no(const char *docid) {
 }
 
 /* Saves the word count to disk */
-void save_word_count(int docid, int count) {
-    fprintf(word_count_fp, "%d %d\n", docid, count);
+void save_word_count(void) {
+    int i;
+    for (i =0; i < MAX_DOCS; i++) {
+        fprintf(word_count_fp, "%d %d\n", postings[i].posting_docid, 
+                                            postings[i].posting_count);
+    }
 }
+
+/* Compare docids. Used in qsort */
+int compare_docid(const void *x, const void *y) {
+    posting *ix = (posting *)x;
+    posting *iy = (posting *)y;
+    int docid1 = ix->posting_docid;
+    int docid2 = iy->posting_docid;
+
+    if (docid1 > docid2) {
+        return 1;
+    } else if (docid1 < docid2) {
+        return -1; 
+    } else {
+        return 0;
+    }   
+}
+
 
 /* end index.c */

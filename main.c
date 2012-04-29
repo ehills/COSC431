@@ -14,40 +14,102 @@
 #include "flexarray.h"
 #include "posting.c"
 #include <string.h>
+#include <unistd.h>
 
 #define NUM_WORDS 900000
-#define MAX_DOCUMENTS 200000
+#define MAX_DOCUMENTS 173251
 #define DOCID_LENGTH 15
 #define AVE_WORD_LENGTH 50
-
-/* Will store posting and its relevance rank */
-typedef struct rated_postingrec {
-    posting posting;
-    int rank;
-} rated_posting;
 
 /* function declarations */
 int compare_count(const void *, const void *);
 char *decompress(char *,int);
 int id_search(int, posting *, int, int);
+int do_index(char *);
+int do_search(char **, int, int);
+void usage(void);
 
 
-/* TODO make it not bohemoth. Separate out functions for searching. Add methods and tidy up code. Very rough and not at all happy with this */
-
-/* Bohemoth main method will either search or index the wall street journal collection. If search it will read in a list of terms from the command line, load in the index from disk and for each query term get the list of postings related to that term and display it. */
+/* Will either search the index or index the file given to it */
 int main(int argc, char **argv) {
 
+    int c;
+    extern char *optarg;
+    int verbosity = 0;
+
+    c = getopt(argc, argv, "i:v:s:h");
+    switch (c) {
+        case 'i':
+            do_index(optarg);
+            break;
+        case 's':
+            do_search(argv, argc, verbosity);
+            break;
+        case 'v':
+            verbosity = 1;
+            do_search(argv, argc, verbosity);
+            break;
+        case 'h':
+            usage();
+            return EXIT_FAILURE;
+            break;
+        case '?':
+            usage();
+            return EXIT_FAILURE;
+            break;
+        default:
+            usage();
+            return EXIT_FAILURE;
+            break;
+    }
+
+    return EXIT_SUCCESS;
+
+}
+
+void usage(void) {
+
+    fprintf(stderr, "\nPlease provide valid commands.\n");
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "-i\tfile_to_index\tThis will index the file you have passed to it.\n");
+    fprintf(stderr, "-s\tsearch_term(s)\tThis will search for term(s) you have provided.\n");
+    fprintf(stderr, "-v\tsearch_term(s)\tThis will search for term(s) you have provided but will\n");
+    fprintf(stderr, "\t\t\toutput the individual results as well as combined results.\n");
+    fprintf(stderr, "-h\t\tPrints this usage.\n");
+
+}
+
+int do_index(char *filename) {
+    FILE *file = NULL;
+
+    file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "File failed to open\n");
+        return EXIT_FAILURE;
+    }
+
+    begin_indexing();  
+    parse(file);
+    end_indexing(); 
+
+    if (fclose(file) != 0) {
+        fprintf(stderr, "File failed to close\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int do_search(char **argv, int argc, int verbosity) {
     size_t ave_word_length = AVE_WORD_LENGTH;
     char docid_buffer[DOCID_LENGTH]; 
     size_t bytes_read = 0;
-    int i;
-    int j;
+    int i, j;
     int words_entered = 0;
-    char temp1[AVE_WORD_LENGTH];
-    char temp2[AVE_WORD_LENGTH];
-    FILE *file = NULL;
+    char temp1[AVE_WORD_LENGTH], temp2[AVE_WORD_LENGTH];
     FILE *indexFile = NULL;
     FILE *postings_file = NULL;
+    FILE *word_count_file = NULL;
     char *temp_word = emalloc(AVE_WORD_LENGTH + 1);
     char **dictionary = emalloc(NUM_WORDS * sizeof(dictionary[0]));
     int *posting_pos = emalloc(NUM_WORDS * sizeof(posting_pos[0]));
@@ -57,191 +119,169 @@ int main(int argc, char **argv) {
     int merged_count = 0;
     int result = 0;
     int new_count = 0;
+    int word_count = 0;
     posting **merged_postings = emalloc(2 * sizeof(merged_postings[0]));
     posting **postings = emalloc((argc -2) * sizeof(postings[0]));
+    posting *doc_num_words = emalloc(MAX_DOCUMENTS * sizeof(postings[0]));
     int *num_post_per_term = emalloc(15 * sizeof(int));
-    int display_all= 0;
     merged_postings[0] = NULL;
     merged_postings[1] = NULL;
 
-    if (argc < 2) {
-        fprintf(stderr, "Please provide a command\n");
+    /* open file */
+    indexFile = fopen("wsj-index", "r");
+    if (indexFile == NULL) {
+        fprintf(stderr, "File failed to open or cannot find file: 'wsj-index'\n");
         return EXIT_FAILURE;
     }
 
-    if (*argv[1] == 'i') {
+    bad_term = emalloc((argc-2) * sizeof(int));
 
-        if (argc < 3) {
-            fprintf(stderr, "Please provide a filename to index.\n");
-            return EXIT_FAILURE;
-        }
-
-        file = fopen(argv[2], "r");
-        if (file == NULL) {
-            fprintf(stderr, "File failed to open\n");
-            return EXIT_FAILURE;
-        }
-
-        begin_indexing();  
-        parse(file);
-        end_indexing(); 
-
-        if (fclose(file) != 0) {
-            fprintf(stderr, "File failed to close\n");
-            return EXIT_FAILURE;
-        }
-
-
-    } else if (*argv[1] == 's') {
-
-        if (argc < 3) {
-            fprintf(stderr, "Please enter at least one search query\n");
-            return EXIT_FAILURE;
-        }
-
-        /* open file */
-        indexFile = fopen("wsj-index", "r");
-        if (indexFile == NULL) {
-            fprintf(stderr, "File failed to open or cannot find file: 'wsj-index'\n");
-            return EXIT_FAILURE;
-        }
-
-        bad_term = emalloc((argc-2) * sizeof(int));
-
-        /* initial loadup */
-        while (getline(&temp_word, &ave_word_length, indexFile) != EOF) {
-            dictionary[words_entered] = emalloc((strlen(temp_word) + 1) * sizeof(char));
-            sscanf(temp_word, "%s %d %d", dictionary[words_entered], &(posting_pos[words_entered]), &(posting_length[words_entered]));
-            words_entered++;
-
-        }
-
-        /* now dict is in memory search for postings */
-
-        postings_file = fopen("wsj-postings", "r");
-        if (postings_file == NULL) {
-            fprintf(stderr, "File failed to open or cannot find file: 'wsj-postings'\n");
-            return EXIT_FAILURE;
-        }
-
-        /* Get all docids related to this term then sort by docid for further searching */
-        for (j = 2; j < argc; j++) { 
-
-            i = search(argv[j], dictionary, 0, words_entered-1);
-
-            if (i != -1) {
-
-                postings[j-2] = emalloc(sizeof(posting));
-
-                fseek(postings_file, posting_pos[i], SEEK_SET);
-                temp_word = emalloc(posting_length[i]);
-                fgets(temp_word, posting_length[i], postings_file);
-
-                /* load posting stuff into memory */
-                post_count = 0;
-                bytes_read = 0;
-                while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
-
-                    if (post_count != 0) { 
-                        postings[j-2] = erealloc(postings[j-2], (post_count + 1) * sizeof(posting));
-                    }
-                    postings[j-2][post_count].posting_count = atoi(temp1);
-                    postings[j-2][post_count].posting_docid = atoi(temp2);
-                    bytes_read += (strlen(temp1) + strlen(temp2) + 2);
-                    post_count++;
-                }
-                bad_term[j-2] = -1;
-                num_post_per_term[j-2] = post_count;
-
-            } else {
-                fprintf(stderr, "Sorry your term %s found no results.\n", argv[j]);
-                bad_term[j-2] = 0;
-                continue;
-            }
-
-            if (j >= 3) {
-
-                /* TODO make it not add count if user has specified the same word multiple times*/
-
-                merged_postings[1] = emalloc(merged_count * sizeof(posting));
-                new_count = 0;
-                for (i = 0; i < post_count; i++) {
-
-                    if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
-                        merged_postings[1][new_count].posting_docid = postings[j-2][i].posting_docid;
-                        merged_postings[1][new_count].posting_count = postings[j-2][i].posting_count + result;
-                        new_count++;
-                    }
-                }
-                if (new_count == 0) {
-                    free(merged_postings[1]);
-                    free(merged_postings[0]);
-                    merged_postings[0] = NULL;
-                    break;
-                }
-                merged_count = new_count;
-                merged_postings[0] = merged_postings[1];
-
-            } else {
-                merged_postings[0] = emalloc(post_count * sizeof(posting));
-                for (i = 0; i < post_count; i++) {
-                    merged_postings[0][i] = postings[j-2][i];
-                }
-                merged_count = post_count;
-            }
-
-        } /* end proccessing */
-
-        /* TODO set up a command line flag and if display all is set then display all individual results as well as merged results */
-
-        if (display_all == 0) {
-            /* displays the postings for each term */
-            for (j = 2; j < argc; j++) {
-                if (bad_term[j-2] == -1) {
-                    qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
-                    fprintf(stdout, "Top 10 Documents containing '%s'\n", argv[j]);
-                    fprintf(stdout, "\nDocid\t\tTimes term found\n");
-                    for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
-                        fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
-                    }
-                    fprintf(stdout, "\n");
-                }
-            }
-        }
-
-        /* displays the postings for the merged list */
-        if (merged_postings[0] != NULL) {
-            qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
-            fprintf(stdout, "Top 10 Documents containing ");
-            for (j=2; j < argc; j++) {
-                if (bad_term[j-2] == -1) { 
-                    fprintf(stdout, "'%s' ", argv[j]);
-                }
-            }
-            fprintf(stdout, "\n\nDocid\t\tTimes terms found (word frequency combined)\n");
-            for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
-                fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
-            }
-        } else {
-            fprintf(stderr, "Sorry no documents were found containing all the terms in your query. Please search for something else.\n");
-        }
-
-        /* close postings file */
-        if (fclose(postings_file) != 0) {
-            fprintf(stderr, "Postings file failed to close\n");
-            return EXIT_FAILURE;
-        }
-
-        /* close index file */
-        if (fclose(indexFile) != 0) {
-            fprintf(stderr, "Index file failed to close\n");
-            return EXIT_FAILURE;
-        }
+    /* initial loadup */
+    while (getline(&temp_word, &ave_word_length, indexFile) != EOF) {
+        dictionary[words_entered] = emalloc((strlen(temp_word) + 1) * sizeof(char));
+        sscanf(temp_word, "%s %d %d", dictionary[words_entered], &(posting_pos[words_entered]), &(posting_length[words_entered]));
+        words_entered++;
 
     }
 
-    return EXIT_SUCCESS;
+    if (fclose(indexFile) < 0) {
+        perror("Closing file.");
+        exit(EXIT_FAILURE);
+    }
 
+    /* initial loadup - load word_count */
+    word_count_file = fopen("wsj-doc_word_count", "r");
+    if (word_count_file == NULL) {
+        fprintf(stderr, "File failed to open or cannot find file: 'wsj-doc_word_count'\n");
+        return EXIT_FAILURE;
+    }
+
+    for (i = 0; i < MAX_DOCUMENTS; i++) {
+        fscanf(word_count_file, "%d %d", &(doc_num_words[i].posting_docid), &(doc_num_words[i].posting_count));
+    }
+
+    if (fclose(word_count_file) < 0) {
+        perror("Closing file.");
+        exit(EXIT_FAILURE);
+    }
+
+    /* now dict is in memory search for postings */
+
+    postings_file = fopen("wsj-postings", "r");
+    if (postings_file == NULL) {
+        fprintf(stderr, "File failed to open or cannot find file: 'wsj-postings'\n");
+        return EXIT_FAILURE;
+    }
+
+    /* Get all docids related to this term then sort by docid for further searching */
+    for (j = 2; j < argc; j++) { 
+
+        i = search(argv[j], dictionary, 0, words_entered-1);
+
+        if (i != -1) {
+
+            postings[j-2] = emalloc(sizeof(posting));
+
+            fseek(postings_file, posting_pos[i], SEEK_SET);
+            temp_word = emalloc(posting_length[i]);
+            fgets(temp_word, posting_length[i], postings_file);
+
+            /* load posting stuff into memory */
+            post_count = 0;
+            bytes_read = 0;
+            while (sscanf(temp_word + bytes_read, "%s %s", temp1, temp2) == 2) {
+
+                if (post_count != 0) { 
+                    postings[j-2] = erealloc(postings[j-2], (post_count + 1) * sizeof(posting));
+                }
+                postings[j-2][post_count].posting_count = atoi(temp1);
+                postings[j-2][post_count].posting_docid = atoi(temp2);
+                bytes_read += (strlen(temp1) + strlen(temp2) + 2);
+                post_count++;
+            }
+            bad_term[j-2] = -1;
+            num_post_per_term[j-2] = post_count;
+
+        } else {
+            fprintf(stderr, "Sorry your term %s found no results.\n", argv[j]);
+            bad_term[j-2] = 0;
+            continue;
+        }
+
+        if (j >= 3) {
+
+            /* TODO make it not add count if user has specified the same word multiple times*/
+
+            merged_postings[1] = emalloc(merged_count * sizeof(posting));
+            new_count = 0;
+            for (i = 0; i < post_count; i++) {
+
+                if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
+                    merged_postings[1][new_count].posting_docid = postings[j-2][i].posting_docid;
+                    merged_postings[1][new_count].posting_count = postings[j-2][i].posting_count + result;
+                    new_count++;
+                }
+            }
+            if (new_count == 0) {
+                free(merged_postings[1]);
+                free(merged_postings[0]);
+                merged_postings[0] = NULL;
+                break;
+            }
+            merged_count = new_count;
+            merged_postings[0] = merged_postings[1];
+
+        } else {
+            merged_postings[0] = emalloc(post_count * sizeof(posting));
+            for (i = 0; i < post_count; i++) {
+                merged_postings[0][i] = postings[j-2][i];
+            }
+            merged_count = post_count;
+        }
+
+    } /* end proccessing */
+
+    /* close postings file */
+    if (fclose(postings_file) != 0) {
+        fprintf(stderr, "Postings file failed to close\n");
+        return EXIT_FAILURE;
+    }
+
+    /* displays the postings for each term */
+    if (verbosity) {
+        for (j = 2; j < argc; j++) {
+            if (bad_term[j-2] == -1) {
+                /* Sort on count TODO change to sort on relevance */
+                qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
+                fprintf(stdout, "Top 10 Documents containing '%s'\n", argv[j]);
+                fprintf(stdout, "\nDocid\t\tTimes term found\n");
+                for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
+                    fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+                }
+                fprintf(stdout, "\n");
+            }
+        }
+    }
+
+    /* displays the postings for the merged list */
+    if (merged_postings[0] != NULL) {
+        qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
+        fprintf(stdout, "Top 10 Documents containing ");
+        for (j=2; j < argc; j++) {
+            if (bad_term[j-2] == -1) { 
+                fprintf(stdout, "'%s' ", argv[j]);
+            }
+        }
+        fprintf(stdout, "\n\nDocid\t\tTimes terms found (word frequency combined)\n");
+        for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
+            fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
+        }
+    } else {
+        fprintf(stderr, "Sorry no documents were found containing all the terms in your query. Please search for something else.\n");
+    }
+
+
+    return EXIT_SUCCESS;
 }
 
 /* compares the two counts */

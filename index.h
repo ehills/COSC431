@@ -16,6 +16,7 @@ extern void start_tag(char const *);
 extern void end_tag(char const *);
 extern void word(char const *);
 extern char *get_doc_no(char const *);
-extern void save_word_count(int, int);
+extern void save_word_count(void);
+int compare_docid(const void *, const void *);
 
 #endif

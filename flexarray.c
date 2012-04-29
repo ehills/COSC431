@@ -9,9 +9,7 @@
 struct flexarrayrec {
     int capacity;
     int no_of_documents;
-   /* int *docid; */
-   /* int *times_found; */
-   posting* postings;
+    posting* postings;
 };
 
 
