@@ -20,12 +20,17 @@
 #define DOCID_LENGTH 15
 #define AVE_WORD_LENGTH 50
 
+/* Will store posting and its relevance rank */
+typedef struct rated_postingrec {
+    posting posting;
+    int rank;
+} rated_posting;
 
-/* Struct to store individual posting */
-
+/* function declarations */
 int compare_count(const void *, const void *);
 char *decompress(char *,int);
 int id_search(int, posting *, int, int);
+
 
 /* TODO make it not bohemoth. Separate out functions for searching. Add methods and tidy up code. Very rough and not at all happy with this */
 
@@ -155,6 +160,8 @@ int main(int argc, char **argv) {
             }
 
             if (j >= 3) {
+
+                /* TODO make it not add count if user has specified the same word multiple times*/
 
                 merged_postings[1] = emalloc(merged_count * sizeof(posting));
                 new_count = 0;
