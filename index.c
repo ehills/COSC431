@@ -14,7 +14,7 @@
 #include <string.h>
 #include "posting.c"
 #define NUM_WORDS 900000 /* ~750,000 unique words */
-#define MAX_DOCS 173251 /* ~750,000 unique words */
+#define MAX_DOCS 173252 /* ~750,000 unique words */
 
 FILE *fp;
 FILE *word_count_fp;
@@ -55,6 +55,11 @@ void begin_indexing(void) {
 void end_indexing(void) {
 
     htable_save_to_disk(dict, fp);
+
+    postings[docs_entered].posting_docid = curr_docno;
+    postings[docs_entered].posting_count = word_count;
+    docs_entered++;
+
     qsort(postings, docs_entered, sizeof(posting), compare_docid);
     save_word_count();
 /*    htable_delete(dict); */

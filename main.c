@@ -17,7 +17,7 @@
 #include <unistd.h>
 
 #define NUM_WORDS 900000
-#define MAX_DOCUMENTS 173251
+#define MAX_DOCUMENTS 173252
 #define DOCID_LENGTH 15
 #define AVE_WORD_LENGTH 50
 
@@ -105,6 +105,7 @@ int do_search(char **argv, int argc, int verbosity) {
     char docid_buffer[DOCID_LENGTH]; 
     size_t bytes_read = 0;
     int i, j;
+    unsigned int density = 0;
     int words_entered = 0;
     char temp1[AVE_WORD_LENGTH], temp2[AVE_WORD_LENGTH];
     FILE *indexFile = NULL;
@@ -126,6 +127,7 @@ int do_search(char **argv, int argc, int verbosity) {
     int *num_post_per_term = emalloc(15 * sizeof(int));
     merged_postings[0] = NULL;
     merged_postings[1] = NULL;
+    bad_term = emalloc((argc-2) * sizeof(int));
 
     /* open file */
     indexFile = fopen("wsj-index", "r");
@@ -133,8 +135,6 @@ int do_search(char **argv, int argc, int verbosity) {
         fprintf(stderr, "File failed to open or cannot find file: 'wsj-index'\n");
         return EXIT_FAILURE;
     }
-
-    bad_term = emalloc((argc-2) * sizeof(int));
 
     /* initial loadup */
     while (getline(&temp_word, &ave_word_length, indexFile) != EOF) {
@@ -144,12 +144,13 @@ int do_search(char **argv, int argc, int verbosity) {
 
     }
 
+    /* Close index file */
     if (fclose(indexFile) < 0) {
         perror("Closing file.");
         exit(EXIT_FAILURE);
     }
 
-    /* initial loadup - load word_count */
+    /* initial loadup - load word_count for each doc */
     word_count_file = fopen("wsj-doc_word_count", "r");
     if (word_count_file == NULL) {
         fprintf(stderr, "File failed to open or cannot find file: 'wsj-doc_word_count'\n");
@@ -164,8 +165,6 @@ int do_search(char **argv, int argc, int verbosity) {
         perror("Closing file.");
         exit(EXIT_FAILURE);
     }
-
-    /* now dict is in memory search for postings */
 
     postings_file = fopen("wsj-postings", "r");
     if (postings_file == NULL) {
@@ -194,8 +193,23 @@ int do_search(char **argv, int argc, int verbosity) {
                 if (post_count != 0) { 
                     postings[j-2] = erealloc(postings[j-2], (post_count + 1) * sizeof(posting));
                 }
-                postings[j-2][post_count].posting_count = atoi(temp1);
+                
                 postings[j-2][post_count].posting_docid = atoi(temp2);
+                word_count = id_search(postings[j-2][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
+                
+                if (word_count < 0) {
+                    fprintf(stderr, "uh oh word count: %d\n", word_count);
+                    fprintf(stderr, "Was looking for docid %d but didnt find it\n", postings[j-2][post_count].posting_docid);
+                }
+
+                /* Calculate density of term in doc */
+                density = word_count / atoi(temp1);
+                if (density < 0) {
+                    fprintf(stderr, "uh oh density: %d\n", density);
+                }
+
+                postings[j-2][post_count].posting_count = density;
+
                 bytes_read += (strlen(temp1) + strlen(temp2) + 2);
                 post_count++;
             }
@@ -208,17 +222,21 @@ int do_search(char **argv, int argc, int verbosity) {
             continue;
         }
 
-        if (j >= 3) {
 
-            /* TODO make it not add count if user has specified the same word multiple times*/
+        /* Merge results from previous term and this term */
+        if (j >= 3) {
 
             merged_postings[1] = emalloc(merged_count * sizeof(posting));
             new_count = 0;
             for (i = 0; i < post_count; i++) {
 
                 if ((result = id_search(postings[j-2][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
+                    density = result * postings[j-2][i].posting_count; 
+                    if (density < 0) {
+                        fprintf(stderr, "really uh oh density: %d probs blew size limit\n", density);
+                    }
                     merged_postings[1][new_count].posting_docid = postings[j-2][i].posting_docid;
-                    merged_postings[1][new_count].posting_count = postings[j-2][i].posting_count + result;
+                    merged_postings[1][new_count].posting_count = density ;
                     new_count++;
                 }
             }
@@ -254,9 +272,9 @@ int do_search(char **argv, int argc, int verbosity) {
                 /* Sort on count TODO change to sort on relevance */
                 qsort(postings[j-2], num_post_per_term[j-2], sizeof(posting), compare_count);
                 fprintf(stdout, "Top 10 Documents containing '%s'\n", argv[j]);
-                fprintf(stdout, "\nDocid\t\tTimes term found\n");
+                fprintf(stdout, "\nDocid\t\tRelevance Rank\n");
                 for (i=0; i < ((10 < num_post_per_term[j-2]) ? 10 : num_post_per_term[j-2]); i++) {
-                    fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), postings[j-2][i].posting_count);
+                    fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,postings[j-2][i].posting_docid), i);
                 }
                 fprintf(stdout, "\n");
             }
@@ -272,14 +290,13 @@ int do_search(char **argv, int argc, int verbosity) {
                 fprintf(stdout, "'%s' ", argv[j]);
             }
         }
-        fprintf(stdout, "\n\nDocid\t\tTimes terms found (word frequency combined)\n");
+        fprintf(stdout, "\n\nDocid\t\tRelevance Rank\n");
         for (i=0; i < ((10 < merged_count) ? 10 : merged_count); i++) {
-            fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), merged_postings[0][i].posting_count);
+            fprintf(stdout, "%s\t%d\n", decompress(docid_buffer,merged_postings[0][i].posting_docid), i);
         }
     } else {
         fprintf(stderr, "Sorry no documents were found containing all the terms in your query. Please search for something else.\n");
     }
-
 
     return EXIT_SUCCESS;
 }
@@ -293,9 +310,9 @@ int compare_count(const void *x, const void *y) {
     int count2 = iy->posting_count;
 
     if (count1 > count2) {
-        return -1;
-    } else if(count1 < count2) {
         return 1;
+    } else if(count1 < count2) {
+        return -1;
     } else {
         return 0;
     }
