@@ -1,12 +1,13 @@
 /**
  * @file htable.c
  * @author Ed Hills
- * @date April 2012
+ * @date August 2010, edited April 2012
  *
- * It creates a hash-table which can use linear-probing or double-hashing
- * as a collision resolution strategy. Its size is either a default value given
- * or the user can pass it and it will be made closeset to prime. It will store
- * stats about the hashtable created.
+ * This structure is a hashtable which contains a a series of 
+ * key_value structs whch in turn represent a key and that key
+ * points to an array of postings. This structure will deal with
+ * storing the data, adding data into the key_value struct and 
+ * saving this to disk.
  */
 
 #include <stdio.h>

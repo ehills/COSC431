@@ -390,8 +390,8 @@ static void yy_fatal_error (yyconst char msg[]  );
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
 
-#define YY_NUM_RULES 11
-#define YY_END_OF_BUFFER 12
+#define YY_NUM_RULES 9
+#define YY_END_OF_BUFFER 10
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -399,12 +399,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[39] =
+static yyconst flex_int16_t yy_accept[33] =
     {   0,
-        0,    0,   12,   10,    9,    9,   10,   10,   10,   10,
-       10,    6,   10,    1,    0,    0,    6,    8,    3,    6,
-        0,    0,    0,    0,    0,    0,    7,    1,    6,    0,
-        4,    0,    0,    5,    2,    7,    2,    0
+        0,    0,   10,    8,    7,    7,    8,    8,    8,    8,
+        8,    4,    1,    0,    0,    4,    6,    3,    4,    0,
+        0,    0,    0,    5,    1,    4,    0,    0,    2,    5,
+        2,    0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -414,15 +414,15 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    3,    1,    4,    5,    6,    7,    1,
         1,    1,    8,    9,   10,   11,   12,   13,   13,   13,
-       13,   13,   13,   13,   13,   13,   13,    1,   14,   15,
-        1,   16,    1,    1,   17,   17,   17,   17,   17,   17,
-       17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
-       17,   17,   17,   17,   17,   17,   17,   17,   17,   17,
-        1,    1,    1,    1,    1,    1,   18,   18,   18,   18,
+       13,   13,   13,   13,   13,   13,   13,    1,   14,    1,
+        1,    1,    1,    1,   15,   15,   15,   15,   15,   15,
+       15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
+       15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
+        1,    1,    1,    1,    1,    1,   16,   16,   16,   16,
 
-       18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
-       18,   18,   18,   18,   18,   18,   18,   18,   18,   18,
-       18,   18,    1,    1,    1,    1,    1,    1,    1,    1,
+       16,   16,   16,   16,   16,   16,   16,   16,   16,   16,
+       16,   16,   16,   16,   16,   16,   16,   16,   16,   16,
+       16,   16,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -439,58 +439,50 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[19] =
+static yyconst flex_int32_t yy_meta[17] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    2,
-        2,    3,    1,    1,    1,    4,    5,    5
+        2,    1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int16_t yy_base[43] =
+static yyconst flex_int16_t yy_base[34] =
     {   0,
-        0,    0,   73,   74,   74,   74,   11,    9,   54,   58,
-       59,   23,   57,   33,   55,    0,    0,   11,   74,   74,
-       54,    0,   13,   45,    0,   21,   30,   38,   32,   26,
-       74,   35,   15,   74,   37,   39,   41,   74,   57,   18,
-       59,   61
+        0,    0,   60,   61,   61,   61,    9,    7,   43,   45,
+       46,   19,   29,   43,    0,    0,   11,   61,   61,   30,
+        0,    0,   19,   31,   30,   25,   33,   15,   35,   37,
+       39,   61,   16
     } ;
 
-static yyconst flex_int16_t yy_def[43] =
+static yyconst flex_int16_t yy_def[34] =
     {   0,
-       38,    1,   38,   38,   38,   38,   38,   38,   38,   38,
-        7,   38,   39,   38,   38,   11,   12,   38,   38,   38,
-       38,   40,   38,   41,    7,   38,   11,   14,   12,   42,
-       38,   38,   38,   38,   38,   38,   38,    0,   38,   38,
-       38,   38
+       32,    1,   32,   32,   32,   32,   32,   32,   32,   32,
+        7,   32,   32,   32,   11,   12,   32,   32,   32,   32,
+       33,    7,   32,   11,   13,   12,   32,   32,   32,   32,
+       32,    0,   32
     } ;
 
-static yyconst flex_int16_t yy_nxt[93] =
+static yyconst flex_int16_t yy_nxt[78] =
     {   0,
         4,    5,    6,    7,    4,    8,    9,   10,    4,   10,
-       11,    4,   12,    4,   13,    4,   14,   14,   15,   21,
-       15,   16,   18,   17,   18,   36,   18,   20,   18,   30,
-       30,   21,   21,   21,   22,   17,   25,   32,   32,   26,
-       15,   34,   15,   27,   29,   17,   33,   33,   16,   28,
-       28,   35,   35,   37,   37,   33,   33,   37,   37,   24,
-       31,   24,   24,   24,   30,   30,   29,   17,   23,   38,
-       17,   19,   38,    3,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38
-
+       11,    4,   12,    4,   13,   13,   14,   20,   14,   15,
+       17,   16,   17,   19,   17,   30,   17,   20,   20,   20,
+       21,   16,   22,   27,   27,   23,   14,   26,   14,   24,
+       15,   16,   26,   25,   25,   28,   28,   29,   29,   31,
+       31,   28,   28,   31,   31,   16,   32,   16,   18,   32,
+        3,   32,   32,   32,   32,   32,   32,   32,   32,   32,
+       32,   32,   32,   32,   32,   32,   32
     } ;
 
-static yyconst flex_int16_t yy_chk[93] =
+static yyconst flex_int16_t yy_chk[78] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    1,    1,    1,    1,    1,    1,    1,    7,   40,
-        7,    7,    8,    7,   18,   33,    8,   12,   18,   23,
-       23,   12,   12,   12,   12,   12,   14,   26,   26,   14,
-       14,   30,   14,   14,   29,   14,   27,   27,   28,   14,
-       14,   32,   32,   35,   35,   36,   36,   37,   37,   39,
-       24,   39,   41,   41,   42,   42,   21,   15,   13,   11,
-       10,    9,    3,   38,   38,   38,   38,   38,   38,   38,
-       38,   38,   38,   38,   38,   38,   38,   38,   38,   38,
-       38,   38
-
+        1,    1,    1,    1,    1,    1,    7,   33,    7,    7,
+        8,    7,    8,   12,   17,   28,   17,   12,   12,   12,
+       12,   12,   13,   23,   23,   13,   13,   26,   13,   13,
+       25,   13,   20,   13,   13,   24,   24,   27,   27,   29,
+       29,   30,   30,   31,   31,   14,   11,   10,    9,    3,
+       32,   32,   32,   32,   32,   32,   32,   32,   32,   32,
+       32,   32,   32,   32,   32,   32,   32
     } ;
 
 static yy_state_type yy_last_accepting_state;
@@ -507,22 +499,24 @@ int zz_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *zztext;
-#line 1 "parse.c"
+#line 1 "main.c"
 /*
-* File: parse.c
-* Author: Edward Hills
-* Date: 23/03/2012
-* Description: This program will parse the xml collection given to it 
-*              using the scanner created by flex below, and then pass
-*              the terms onto the indexer.
-*/
+ * File: main.c
+ * Author: Edward Hills
+ * Date: 30/04/2012
+ * Description: This program will parse the terms sent in by the user
+ *              in the same way that the indexer did.
+ */
+/* parse input same as parse did to index */
 #define YY_NO_INPUT 1
-#line 14 "parse.c"
+#line 14 "main.c"
 #include <stdio.h>
 #include "mylib.h"
-#include "index.h"
+#include "search.h"
 
-#line 526 "lex.zz.c"
+void add_term(const char *);
+
+#line 520 "lex.zz.c"
 
 #define INITIAL 0
 
@@ -707,9 +701,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 20 "parse.c"
+#line 22 "main.c"
 
-#line 713 "lex.zz.c"
+#line 707 "lex.zz.c"
 
 	if ( !(yy_init) )
 		{
@@ -762,13 +756,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 39 )
+				if ( yy_current_state >= 33 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 74 );
+		while ( yy_base[yy_current_state] != 61 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -794,81 +788,71 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 21 "parse.c"
+#line 23 "main.c"
 { 
 
-    toLower(zztext);
-    word(zztext); 
-    
-} /* eg fred */
+        toLower(zztext);
+        add_term(zztext); 
+                
+}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 28 "parse.c"
+#line 30 "main.c"
 {
 
-    toLower(zztext);
-    word(zztext);
+        toLower(zztext);
+        add_term(zztext);
 
 }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 35 "parse.c"
-{ /* eat it up */ }
+#line 37 "main.c"
+/* eat it up */ 
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 37 "parse.c"
-{ start_tag(zztext); }
+#line 39 "main.c"
+{   
+            
+                toLower(zztext);
+                add_term(zztext); 
+                            
+}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 38 "parse.c"
-{ end_tag(zztext); }
+#line 45 "main.c"
+{ 
+            
+                toLower(zztext);
+                add_term(zztext); 
+                            
+}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 39 "parse.c"
-{ 
-    
-    toLower(zztext);
-    word(zztext); 
-    
-} /* eg. $24.08 */
+#line 52 "main.c"
+/* eat it up */ 
 	YY_BREAK
 case 7:
+/* rule 7 can match eol */
 YY_RULE_SETUP
-#line 45 "parse.c"
-{ 
-    
-    toLower(zztext);
-    word(zztext); 
-    
-}
+#line 53 "main.c"
+/* eat it up */ 
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 52 "parse.c"
-/* eat it up */ 
-	YY_BREAK
-case 9:
-/* rule 9 can match eol */
-YY_RULE_SETUP
-#line 53 "parse.c"
-/* eat it up */ 
-	YY_BREAK
-case 10:
-YY_RULE_SETUP
-#line 54 "parse.c"
+#line 54 "main.c"
 /* eat it up */
 	YY_BREAK
-case 11:
+case 9:
 YY_RULE_SETUP
-#line 55 "parse.c"
+#line 55 "main.c"
 ECHO;
 	YY_BREAK
-#line 872 "lex.zz.c"
+#line 856 "lex.zz.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1160,7 +1144,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 39 )
+			if ( yy_current_state >= 33 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1188,11 +1172,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 39 )
+		if ( yy_current_state >= 33 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 38);
+	yy_is_jam = (yy_current_state == 32);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1829,17 +1813,123 @@ void zzfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 55 "parse.c"
+#line 55 "main.c"
 
 
+/* end parse */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include "index.h"
+#include <string.h>
+#include <unistd.h>
+#include "search.h"
+#include "mylib.h"
 #include "parse.h"
 
-void parse(FILE *stream) {
-    
-    zzin = stream;
+/* function declarations */
+int do_index(char *);
+void usage(void);
+void get_input();
+
+int term_count = 0;
+char **term_input;
+
+void get_input() {
+
     zzlex();
 
 }
+/* Will either search the index or index the file given to it */
+int main(int argc, char **argv) {
 
+    int c;
+    extern char *optarg;
+    int verbosity = 0;
+
+    term_input = emalloc(sizeof(char *) * 15);
+
+    c = getopt(argc, argv, "i:vsh");
+    switch (c) {
+        case 'i':
+            do_index(optarg);
+            break;
+        case 's':
+            get_input();
+            if (!term_count) {
+                usage();
+                return EXIT_FAILURE;
+            }
+            do_search(term_input, term_count, verbosity);
+            break;
+        case 'v':
+            verbosity = 1;
+            get_input();
+            if (!term_count) {
+                usage();
+                return EXIT_FAILURE;
+            }
+            do_search(term_input, term_count, verbosity);
+            break;
+        case 'h':
+            usage();
+            return EXIT_FAILURE;
+            break;
+        case '?':
+            usage();
+            return EXIT_FAILURE;
+            break;
+        default:
+            usage();
+            return EXIT_FAILURE;
+            break;
+    }
+
+    return EXIT_SUCCESS;
+
+}
+
+/* displays usage to the user */
+void usage(void) {
+
+    fprintf(stderr, "\nPlease provide valid commands.\n");
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "-i\twsj-file\tThis will index the file you have passed to it.\n");
+    fprintf(stderr, "-s\tsearch_term(s)\tThis will search for term(s) you have provided.\n");
+    fprintf(stderr, "-v\tsearch_term(s)\tThis will search for term(s) you have provided but will\n");
+    fprintf(stderr, "\t\t\toutput the individual results as well as combined results.\n");
+    fprintf(stderr, "-h\t\t\tPrints this usage.\n");
+
+}
+
+/* indexes the file given to it */
+int do_index(char *filename) {
+    FILE *file = NULL;
+
+    file = fopen(filename, "r");
+    if (file == NULL) {
+        fprintf(stderr, "File failed to open\n");
+        return EXIT_FAILURE;
+    }
+
+    begin_indexing();  
+    parse(file);
+    end_indexing(); 
+
+    if (fclose(file) != 0) {
+        fprintf(stderr, "File failed to close\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+/* adds the term to a list and will be passed to search later on */
+void add_term(const char *term) {
+
+    term_input[term_count] = emalloc(sizeof(char*) * (strlen(term) + 1));
+    strcpy(term_input[term_count], term); 
+    term_count++;
+
+}
 

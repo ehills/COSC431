@@ -80,7 +80,7 @@ int do_search(char** terms, int term_length, int verbosity) {
     /* open index */
     indexFile = fopen(index_filename, "r");
     if (indexFile == NULL) {
-        fprintf(stderr, "File failed to open or cannot find file: 'wsj-index'\n");
+        fprintf(stderr, "File failed to open or cannot find file: %s\n", index_filename);
         return EXIT_FAILURE;
     }
 
@@ -101,7 +101,7 @@ int do_search(char** terms, int term_length, int verbosity) {
     /* initial loadup - load word_count for each doc */
     word_count_file = fopen(word_count_filename, "r");
     if (word_count_file == NULL) {
-        fprintf(stderr, "File failed to open or cannot find file: 'wsj-doc_word_count'\n");
+        fprintf(stderr, "File failed to open or cannot find file: %s\n", word_count_filename);
         return EXIT_FAILURE;
     }
 
@@ -119,7 +119,7 @@ int do_search(char** terms, int term_length, int verbosity) {
     /* open postings file */
     postings_file = fopen(postings_filename, "r");
     if (postings_file == NULL) {
-        fprintf(stderr, "File failed to open or cannot find file: 'wsj-postings'\n");
+        fprintf(stderr, "File failed to open or cannot find file: %s\n", postings_filename);
         return EXIT_FAILURE;
     }
 
