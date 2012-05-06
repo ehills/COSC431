@@ -45,6 +45,7 @@ struct key_value_rec {
  * @return htable the new hash-table.
  */
 htable htable_new(int capacity, hashing_t hashing_type){
+    int i;
     htable result = emalloc(sizeof(*result));
 
     capacity = find_prime(capacity);
@@ -53,6 +54,10 @@ htable htable_new(int capacity, hashing_t hashing_type){
     result->keys = emalloc(capacity * sizeof(result->keys[0]));
     result->count = calloc(capacity, sizeof(int));
     result->hashing_type = hashing_type;
+    
+    for (i = 0; i < capacity; i++){
+        result->keys[i].key = NULL;
+    }
     return result;
 }
 
