@@ -97,9 +97,15 @@ int is_prime(int candidate) {
  * @param h the htable to be freed.
  */
 void htable_delete(htable h){
+    int i;
 
-    /* TODO add delete_keys functions (need to free posting?) */
     free(h->count);
+    for (i = 0; i < h->capacity; i++) {
+        if (h->keys[i].key != NULL) {
+            free(h->keys[i].key);
+            flexarray_delete(h->keys[i].postings);
+        }
+    }
     free(h->keys);
     free(h);
 }

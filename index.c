@@ -70,6 +70,8 @@ void end_indexing(void) {
     qsort(postings, docs_entered, sizeof(index_posting), compare_docid);
     save_word_count();
 
+    free(dict);
+
     if (fclose(fp) < 0) {
         perror("Closing file.");
         exit(EXIT_FAILURE);
