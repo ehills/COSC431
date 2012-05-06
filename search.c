@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "search.h"
+#include <math.h>
 
 #define NUM_WORDS 900000
 #define MAX_DOCUMENTS 173252
@@ -43,6 +44,9 @@ int do_search(char** terms, int term_length, int verbosity) {
     FILE *indexFile = NULL;
     FILE *postings_file = NULL;
     FILE *word_count_file = NULL;
+    char *postings_filename = "wsj-postings";
+    char *word_count_filename = "wsj-doc_word_count";
+    char *index_filename = "wsj-index";
     char *temp_word = emalloc(AVE_WORD_LENGTH + 1);
     
     /* dictionary to store all terms */
@@ -73,8 +77,8 @@ int do_search(char** terms, int term_length, int verbosity) {
     bad_term = emalloc(term_length * sizeof(int));
     postings = emalloc(term_length * sizeof(postings[0]));
 
-    /* open file */
-    indexFile = fopen("wsj-index", "r");
+    /* open index */
+    indexFile = fopen(index_filename, "r");
     if (indexFile == NULL) {
         fprintf(stderr, "File failed to open or cannot find file: 'wsj-index'\n");
         return EXIT_FAILURE;
@@ -95,22 +99,25 @@ int do_search(char** terms, int term_length, int verbosity) {
     }
 
     /* initial loadup - load word_count for each doc */
-    word_count_file = fopen("wsj-doc_word_count", "r");
+    word_count_file = fopen(word_count_filename, "r");
     if (word_count_file == NULL) {
         fprintf(stderr, "File failed to open or cannot find file: 'wsj-doc_word_count'\n");
         return EXIT_FAILURE;
     }
 
+    /* read in num words for all docs */
     for (i = 0; i < MAX_DOCUMENTS; i++) {
         fscanf(word_count_file, "%d %d", &(doc_num_words[i].posting_docid), &(doc_num_words[i].posting_count));
     }
 
+    /* close word_count file */
     if (fclose(word_count_file) < 0) {
         perror("Closing file.");
         exit(EXIT_FAILURE);
     }
 
-    postings_file = fopen("wsj-postings", "r");
+    /* open postings file */
+    postings_file = fopen(postings_filename, "r");
     if (postings_file == NULL) {
         fprintf(stderr, "File failed to open or cannot find file: 'wsj-postings'\n");
         return EXIT_FAILURE;
@@ -132,16 +139,15 @@ int do_search(char** terms, int term_length, int verbosity) {
             fread(temp_word, posting_length[word_pos], sizeof(char), postings_file);
             temp_word[posting_length[word_pos]] = '\0';
 
-            /* load posting stuff into memory */
-            
             /* need to do this just the once */
             temp1 = strtok(temp_word, " ");
             postings[j][post_count].posting_docid = atoi(strtok(NULL, "\t"));
-            word_count = get_word_count_id_search(postings[j][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
-            /* Calculate density of term in doc */
+            word_count = get_word_count(postings[j][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
 
+            /* calculate tf */
             density = atof(temp1) / word_count;
-            density *= (docs_containing_term[word_pos] / (MAX_DOCUMENTS / 10000)); 
+            /* calculate idf */
+            density *= (log(((double)MAX_DOCUMENTS / (double)docs_containing_term[word_pos])) / log(2)); 
 
             postings[j][post_count].posting_count = atoi(temp1);
             postings[j][post_count].rank = density;
@@ -151,11 +157,12 @@ int do_search(char** terms, int term_length, int verbosity) {
                 postings[j] = erealloc(postings[j], (post_count + 1) * sizeof(posting));
 
                 postings[j][post_count].posting_docid = atoi(strtok(NULL, "\t"));
-                word_count = get_word_count_id_search(postings[j][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
-                /* Calculate density of term in doc */
-                
+                word_count = get_word_count(postings[j][post_count].posting_docid, doc_num_words, 0, MAX_DOCUMENTS);
+               
+                /* calculate tf */
                 density = atof(temp1) / word_count;
-                density *= (docs_containing_term[word_pos] / (MAX_DOCUMENTS / 10000)); 
+                /* calculate idf */
+                density *= (log(((double)MAX_DOCUMENTS / (double)docs_containing_term[word_pos])) / log(2)); 
 
                 postings[j][post_count].posting_count = atoi(temp1);
                 postings[j][post_count].rank = density;
@@ -165,6 +172,7 @@ int do_search(char** terms, int term_length, int verbosity) {
             bad_term[j] = -1;
             num_post_per_term[j] = post_count;
 
+        /* Didn't find it */
         } else {
             fprintf(stderr, "Sorry your term '%s' found no results.\n", terms[j]);
             bad_term[j] = 0;
@@ -178,10 +186,10 @@ int do_search(char** terms, int term_length, int verbosity) {
             new_count = 0;
             for (i = 0; i < post_count; i++) {
 
-                if ((result = id_search(postings[j][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
+                if ((result = get_rank(postings[j][i].posting_docid, merged_postings[0], 0, merged_count)) != -1) {
                     merged_postings[1][new_count].posting_docid = postings[j][i].posting_docid;
                     merged_postings[1][new_count].posting_count = postings[j][i].posting_count;
-                    merged_postings[1][new_count].rank = (postings[j][i].rank * result);
+                    merged_postings[1][new_count].rank = (postings[j][i].rank + result);
                     new_count++;
                 }
             }
@@ -193,7 +201,8 @@ int do_search(char** terms, int term_length, int verbosity) {
             }
             merged_count = new_count;
             merged_postings[0] = merged_postings[1];
-
+    
+        /* load up first hit */
         } else {
             merged_postings[0] = emalloc(post_count * sizeof(posting));
             for (i = 0; i < post_count; i++) {
@@ -214,7 +223,7 @@ int do_search(char** terms, int term_length, int verbosity) {
     if (verbosity) {
         for (j = 0; j < term_length; j++) {
             if (bad_term[j] == -1) {
-                qsort(postings[j], num_post_per_term[j], sizeof(posting), compare_count);
+                qsort(postings[j], num_post_per_term[j], sizeof(posting), compare_rank);
                 fprintf(stderr, "Top 10 Documents containing '%s'\n", terms[j]);
                 fprintf(stderr, "\nDocid\t\tRelevance Rank\n");
                 for (i=0; i < ((10 < num_post_per_term[j]) ? 10 : num_post_per_term[j]); i++) {
@@ -227,7 +236,7 @@ int do_search(char** terms, int term_length, int verbosity) {
 
     /* displays the postings for the merged list */
     if (merged_postings[0] != NULL) {
-        qsort(merged_postings[0], merged_count, sizeof(posting), compare_count);
+        qsort(merged_postings[0], merged_count, sizeof(posting), compare_rank);
         fprintf(stderr, "Top 10 Documents containing ");
         for (j=0; j < term_length; j++) {
             if (bad_term[j] == -1) { 
@@ -248,7 +257,7 @@ int do_search(char** terms, int term_length, int verbosity) {
 }
 
 /* compares the two counts */
-int compare_count(const void *x, const void *y) {
+int compare_rank(const void *x, const void *y) {
 
     posting *ix = (posting *) x;
     posting *iy = (posting *) y;
@@ -266,32 +275,32 @@ int compare_count(const void *x, const void *y) {
 }
 
 /* binary searches the docid list and returns the posting count */
-int get_word_count_id_search(int docid, posting *postings, int start, int finish){
+int get_word_count(int docid, posting *postings, int start, int finish){
     int m = (finish + start) / 2;
 
     if(finish < start){
         return -1; 
     }   
     else if((postings[m].posting_docid > docid)){ 
-        return get_word_count_id_search(docid, postings, start, m - 1); 
+        return get_word_count(docid, postings, start, m - 1); 
     } else if(postings[m].posting_docid < docid){ 
-        return get_word_count_id_search(docid, postings, m + 1, finish);
+        return get_word_count(docid, postings, m + 1, finish);
     }else {
         return postings[m].posting_count;
     }   
 }
 
 /* binary searches the docid list and returns the posting count */
-double id_search(int docid, posting *postings, int start, int finish){
+double get_rank(int docid, posting *postings, int start, int finish){
     int m =(finish + start) / 2;
 
     if(finish < start){
         return -1; 
     }   
     else if((postings[m].posting_docid > docid)){ 
-        return id_search(docid, postings, start, m - 1); 
+        return get_rank(docid, postings, start, m - 1); 
     } else if(postings[m].posting_docid < docid){ 
-        return id_search(docid, postings, m + 1, finish);
+        return get_rank(docid, postings, m + 1, finish);
     }else {
         return postings[m].rank;
     }   
