@@ -1,8 +1,28 @@
 COSC431 Search Engine
+Edward Hills
+April 2012
 
-I am building a search engine to search 100,000 wall street journals.
-I will parse the xml and then index them using inverted files.
+To compile:
 
-Created by Edward Hills
+flex parse.c
+flex -P zz main.c
 
-Updated: 23/03/2012
+or if for some reason that fails i have already provided the flex compiled code.
+
+gcc -Wall -pedantic flexarray.c htable.c index.c lex.zz.c lex.yy.c mylib.c search.c -lm -o search
+
+To Index:
+
+./search -i /path/to/wsj
+
+To Search:
+
+./search -s < test_file
+or simply enter it at the prompt 
+
+or
+
+./search -v test_file
+or enter it at the prompt.
+-v will produce output about each individual word in the query. -s will only do the final merged report.
+
